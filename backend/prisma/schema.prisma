@@ -1,0 +1,287 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+  MANAGER
+  HR
+}
+
+enum ContractType {
+  CDI
+  CDD
+  INTERNSHIP
+  FREELANCE
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  roles     Role[]   @default([USER])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  employee  Employee?
+}
+
+model Department {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  employees Employee[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Position {
+  id        String     @id @default(uuid())
+  title     String     @unique
+  employees Employee[]
+  history   PositionHistory[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  COHABITANT
+  WIDOWER
+  DIVORCED
+}
+
+enum EmployeeType {
+  EMPLOYEE
+  STUDENT
+  TRAINEE
+  CONTRACTOR
+  FREELANCE
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  SUSPENDED
+  EXITED
+}
+
+model Employee {
+  id           String     @id @default(uuid())
+  
+  // Identity
+  firstName    String
+  lastName     String
+  jobTitle     String?
+  workEmail    String     @unique
+  workPhone    String?
+  workMobile   String?
+  
+  // Work Info
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  managerId    String?
+  manager      Employee?   @relation("ManagerSubordinates", fields: [managerId], references: [id])
+  subordinates Employee[]  @relation("ManagerSubordinates")
+  coachId      String?
+  coach        Employee?   @relation("CoachMentees", fields: [coachId], references: [id])
+  mentees      Employee[]  @relation("CoachMentees")
+  
+  workAddress  String?
+  workLocation String?
+  workingHours String?
+  timezone     String?     @default("UTC")
+
+  // Private Info
+  privateEmail       String?
+  phone              String?
+  address            String?
+  nationality        String?
+  identificationId   String?
+  passportId         String?
+  gender             Gender?
+  birthday           DateTime?
+  placeOfBirth       String?
+  countryOfBirth     String?
+  maritalStatus      MaritalStatus?
+  children           Int?       @default(0)
+  emergencyContact   String?
+  emergencyPhone     String?
+  bankAccount        String?
+
+  // HR Settings
+  status       EmployeeStatus @default(ACTIVE)
+  employeeType EmployeeType @default(EMPLOYEE)
+  userId       String?    @unique
+  user         User?      @relation(fields: [userId], references: [id])
+  pin          String?
+  badgeId      String?
+
+  // Relations
+  positionId   String?
+  position     Position?   @relation(fields: [positionId], references: [id])
+  positionHistory PositionHistory[]
+  
+  contracts    Contract[]
+  attendances  Attendance[]
+  leaves       LeaveRequest[]
+  absences     Absence[]
+  documents    Document[]
+  
+  hireDate     DateTime
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model PositionHistory {
+  id          String    @id @default(uuid())
+  startDate   DateTime
+  endDate     DateTime?
+  
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  
+  positionId  String
+  position    Position  @relation(fields: [positionId], references: [id])
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum ContractStatus {
+  DRAFT
+  RUNNING
+  TO_RENEW
+  EXPIRED
+}
+
+enum WorkSchedule {
+  FIVE_DAYS
+  SIX_DAYS
+}
+
+model Contract {
+  id          String         @id @default(uuid())
+  reference   String?        // Manual identifier e.g. "CT-2024-001"
+  status      ContractStatus @default(DRAFT)
+  type        ContractType
+  startDate   DateTime
+  endDate     DateTime?
+  wage        Float
+  trialPeriodEndDate DateTime?
+  workingSchedule    String?   // e.g. "Standard 40h/week"
+  workSchedule       WorkSchedule @default(FIVE_DAYS)
+  scheduledPay       String?   // e.g. "Monthly"
+  
+  // Relations
+  employeeId  String
+  employee    Employee       @relation(fields: [employeeId], references: [id])
+  
+  // Amendments
+  previousContractId String?   @unique // One-to-one for chain
+  previousContract   Contract? @relation("ContractHistory", fields: [previousContractId], references: [id])
+  nextContract       Contract? @relation("ContractHistory")
+
+  fileUrl     String?
+  
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model Attendance {
+  id          String    @id @default(uuid())
+  date        DateTime
+  checkIn     DateTime?
+  checkOut    DateTime?
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model LeaveRequest {
+  id          String      @id @default(uuid())
+  type        String
+  startDate   DateTime
+  endDate     DateTime
+  reason      String?
+  status      LeaveStatus @default(PENDING)
+  employeeId  String
+  employee    Employee    @relation(fields: [employeeId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Candidate {
+  id          String   @id @default(uuid())
+  firstName   String
+  lastName    String
+  email       String   @unique
+  phone       String?
+  resumeUrl   String?
+  status      String   @default("APPLIED")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  name        String
+  url         String
+  type        String
+  employeeId  String?
+  employee    Employee? @relation(fields: [employeeId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model PayrollBonus {
+  id          String   @id @default(uuid())
+  name        String
+  isCotisable Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AbsenceReason {
+  id           String    @id @default(uuid())
+  name         String
+  isAuthorized Boolean   @default(true)
+  absences     Absence[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Absence {
+  id          String   @id @default(uuid())
+  date        DateTime
+  isFullDay   Boolean  @default(false)
+  hours       Float?
+  startTime   String?
+  endTime     String?
+  reason      String?  // Keep for backward compatibility or custom notes
+  
+  reasonRelId String?
+  reasonRel   AbsenceReason? @relation(fields: [reasonRelId], references: [id])
+
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
