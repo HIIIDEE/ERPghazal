@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query, Res, StreamableFile } from '@nestjs/common';
 import { HrService } from './hr.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { CreatePayrollBonusDto } from './dto/create-payroll-bonus.dto';
+import type { Response } from 'express';
 
 @Controller('hr')
 export class HrController {
@@ -26,6 +28,11 @@ export class HrController {
         return this.hrService.findOneEmployee(id);
     }
 
+    @Get('contracts')
+    findAllContracts() {
+        return this.hrService.findAllContracts();
+    }
+
     @Post('contracts')
     createContract(@Body() data: any) {
         return this.hrService.createContract(data);
@@ -39,6 +46,11 @@ export class HrController {
     @Get('positions')
     findAllPositions() {
         return this.hrService.findAllPositions();
+    }
+
+    @Get('departments')
+    findAllDepartments() {
+        return this.hrService.findAllDepartments();
     }
 
     @Post('positions')
@@ -58,7 +70,7 @@ export class HrController {
     }
 
     @Post('bonuses')
-    createBonus(@Body() body: any) {
+    createBonus(@Body() body: CreatePayrollBonusDto) {
         return this.hrService.createPayrollBonus(body);
     }
 
@@ -101,4 +113,70 @@ export class HrController {
 
 
 
+    @Post('employees/:id/bonuses')
+    assignBonus(@Param('id') id: string, @Body() body: { bonusId: string, amount?: number, startDate: string, frequency: 'MONTHLY' | 'PONCTUELLE', endDate?: string }) {
+        return this.hrService.assignBonusToEmployee(id, body.bonusId, body);
+    }
+
+    @Delete('employees/:id/bonuses/:bonusId')
+    removeBonus(@Param('id') id: string, @Param('bonusId') bonusId: string) {
+        return this.hrService.removeBonusFromEmployee(id, bonusId);
+    }
+
+    @Get('employees/:id/bonuses')
+    getEmployeeBonuses(@Param('id') id: string) {
+        return this.hrService.getEmployeeBonuses(id);
+    }
+
+    // Payslips
+    @Post('payslips/generate')
+    generatePayslips(@Body() body: { employeeIds: string[], month: number, year: number }) {
+        return this.hrService.generatePayslips(body.employeeIds, body.month, body.year);
+    }
+
+    @Get('payslips')
+    getPayslips(@Query('month') month?: string, @Query('year') year?: string) {
+        const monthNum = month ? parseInt(month) : undefined;
+        const yearNum = year ? parseInt(year) : undefined;
+        return this.hrService.getPayslips(monthNum, yearNum);
+    }
+
+    @Delete('payslips/:id')
+    deletePayslip(@Param('id') id: string) {
+        return this.hrService.deletePayslip(id);
+    }
+
+    @Get('payslips/:id/pdf')
+    async downloadPayslipPDF(@Param('id') id: string, @Res() res: Response) {
+        const pdfBuffer = await this.hrService.generatePayslipPDF(id);
+
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename=bulletin-paie-${id}.pdf`,
+            'Content-Length': pdfBuffer.length,
+        });
+
+        res.end(pdfBuffer);
+    }
+
+    // Social Contributions
+    @Get('contributions')
+    getContributions() {
+        return this.hrService.getAllContributions();
+    }
+
+    @Post('contributions')
+    createContribution(@Body() data: any) {
+        return this.hrService.createContribution(data);
+    }
+
+    @Put('contributions/:id')
+    updateContribution(@Param('id') id: string, @Body() data: any) {
+        return this.hrService.updateContribution(id, data);
+    }
+
+    @Delete('contributions/:id')
+    deleteContribution(@Param('id') id: string) {
+        return this.hrService.deleteContribution(id);
+    }
 }

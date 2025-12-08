@@ -22,6 +22,15 @@ class CreateContractDto {
     workingSchedule;
     scheduledPay;
     employeeId;
+    hourlyWage;
+    weeklyHours;
+    classification;
+    coefficient;
+    benefits;
+    cnasScheme;
+    fiscalScheme;
+    executiveStatus;
+    trialPeriodDuration;
 }
 exports.CreateContractDto = CreateContractDto;
 __decorate([
@@ -67,4 +76,48 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateContractDto.prototype, "employeeId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateContractDto.prototype, "hourlyWage", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateContractDto.prototype, "weeklyHours", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateContractDto.prototype, "classification", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateContractDto.prototype, "coefficient", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
+], CreateContractDto.prototype, "benefits", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateContractDto.prototype, "cnasScheme", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateContractDto.prototype, "fiscalScheme", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateContractDto.prototype, "executiveStatus", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateContractDto.prototype, "trialPeriodDuration", void 0);
 //# sourceMappingURL=create-contract.dto.js.map

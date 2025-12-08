@@ -9,6 +9,7 @@ export interface Employee {
     jobTitle?: string;
     workPhone?: string;
     workMobile?: string;
+    workLocation?: string;
     hireDate: string;
     // Private Info
     address?: string;
@@ -25,12 +26,37 @@ export interface Employee {
     emergencyPhone?: string;
     bankAccount?: string;
 
+    // CNAS
+    socialSecurityNumber?: string;
+    cnasAgency?: string;
+    cnasStartDate?: string;
+    isHandicapped?: boolean;
+    cnasContribution?: boolean;
+    cnasRateSalary?: string;
+    cnasRatePatron?: string;
+    cnasRateSocial?: string;
+    cnasRateHousing?: string;
+    cnasRateCacobath?: string;
+    cnasRateService?: string;
+    cnasMutual?: string;
+
     // Relations
     contracts?: any[];
-    department?: { name: string };
-    position?: { title: string };
+    departmentId?: string;
+    department?: { id: string, name: string };
+    positionId?: string;
+    position?: { id: string, title: string };
     positionHistory?: any[];
     user?: { email: string };
+    bonuses?: {
+        id: string;
+        bonusId: string;
+        amount?: number;
+        percentage?: number;
+        startDate: string;
+        endDate?: string;
+        frequency: 'MONTHLY' | 'PONCTUELLE';
+    }[];
 }
 
 interface EmployeeState {
@@ -39,20 +65,26 @@ interface EmployeeState {
     loading: boolean;
     error: string | null;
     fetchEmployees: () => Promise<void>;
+    fetchContracts: () => Promise<void>;
+    contracts: any[];
     fetchEmployee: (id: string) => Promise<void>;
     positions: any[];
+    departments: any[];
     createEmployee: (data: any) => Promise<void>;
     createContract: (data: any) => Promise<void>;
     updateContract: (id: string, data: any) => Promise<void>;
     fetchPositions: () => Promise<void>;
     createPosition: (title: string) => Promise<void>;
+    fetchDepartments: () => Promise<void>;
     assignPosition: (employeeId: string, positionId: string, startDate: string) => Promise<void>;
     updateEmployee: (id: string, data: any) => Promise<void>;
     // Bonus
     payrollBonuses: any[];
     fetchPayrollBonuses: () => Promise<void>;
-    createPayrollBonus: (data: { name: string, isCotisable: boolean }) => Promise<void>;
+    createPayrollBonus: (data: { name: string, calculationMode: 'FIXE' | 'POURCENTAGE', amount?: number, percentage?: number, description?: string }) => Promise<void>;
     deletePayrollBonus: (id: string) => Promise<void>;
+    assignBonus: (employeeId: string, bonusId: string, details?: { amount?: number, startDate: string, frequency: 'MONTHLY' | 'PONCTUELLE', endDate?: string }) => Promise<void>;
+    removeBonus: (employeeId: string, bonusId: string) => Promise<void>;
     // Absences
     absences: any[];
     createAbsence: (data: any) => Promise<void>;
@@ -63,13 +95,18 @@ interface EmployeeState {
     fetchAbsenceReasons: () => Promise<void>;
     createAbsenceReason: (data: { name: string, isAuthorized: boolean }) => Promise<void>;
     deleteAbsenceReason: (id: string) => Promise<void>;
-
+    // Payslips
+    payslips: any[];
+    generatePayslips: (employeeIds: string[], month: number, year: number) => Promise<void>;
+    fetchPayslips: (month?: number, year?: number) => Promise<void>;
+    deletePayslip: (id: string) => Promise<void>;
 }
 
 export const useEmployeeStore = create<EmployeeState>((set, get) => ({
     employees: [],
     selectedEmployee: null,
     positions: [],
+    departments: [],
     payrollBonuses: [],
     loading: false,
     error: null,
@@ -80,6 +117,16 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
             set({ employees: response.data, loading: false });
         } catch (error) {
             set({ error: 'Erreur chargement employés', loading: false });
+        }
+    },
+    contracts: [],
+    fetchContracts: async () => {
+        set({ loading: true, error: null });
+        try {
+            const response = await api.get('/hr/contracts');
+            set({ contracts: response.data, loading: false });
+        } catch (error) {
+            set({ error: 'Erreur chargement contrats', loading: false });
         }
     },
     fetchEmployee: async (id: string) => {
@@ -145,6 +192,15 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
         }
     },
 
+    fetchDepartments: async () => {
+        try {
+            const res = await api.get('/hr/departments');
+            set({ departments: res.data });
+        } catch (error) {
+            console.error(error);
+        }
+    },
+
     assignPosition: async (employeeId: string, positionId: string, startDate: string) => {
         try {
             await api.post(`/hr/employees/${employeeId}/assign-position`, { positionId, startDate });
@@ -190,6 +246,24 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
         try {
             await api.delete(`/hr/bonuses/${id}`);
             get().fetchPayrollBonuses();
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    assignBonus: async (employeeId, bonusId, details) => {
+        try {
+            await api.post(`/hr/employees/${employeeId}/bonuses`, { bonusId, ...details });
+            get().fetchEmployee(employeeId); // Refresh employee to see new bonus
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    removeBonus: async (employeeId, bonusId) => {
+        try {
+            await api.delete(`/hr/employees/${employeeId}/bonuses/${bonusId}`);
+            get().fetchEmployee(employeeId); // Refresh employee
         } catch (error) {
             throw error;
         }
@@ -244,6 +318,36 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
         try {
             await api.delete(`/hr/absence-reasons/${id}`);
             get().fetchAbsenceReasons();
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    // Payslips
+    payslips: [],
+    generatePayslips: async (employeeIds, month, year) => {
+        try {
+            await api.post('/hr/payslips/generate', { employeeIds, month, year });
+            get().fetchPayslips(month, year);
+        } catch (error) {
+            throw error;
+        }
+    },
+    fetchPayslips: async (month, year) => {
+        try {
+            const params: any = {};
+            if (month !== undefined) params.month = month;
+            if (year !== undefined) params.year = year;
+            const res = await api.get('/hr/payslips', { params });
+            set({ payslips: res.data });
+        } catch (error) {
+            console.error(error);
+        }
+    },
+    deletePayslip: async (id) => {
+        try {
+            await api.delete(`/hr/payslips/${id}`);
+            get().fetchPayslips();
         } catch (error) {
             throw error;
         }

@@ -261,21 +261,29 @@ export default function EmployeeAttendance({ employeeId }: AttendanceProps) {
             }
         });
 
-        // Calculate potential hours
+        // Calculate potential hours and days
         let potentialHours = 0;
+        let potentialDays = 0;
         const daysInCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+
         for (let i = 1; i <= daysInCurrentMonth; i++) {
             const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
             const day = date.getDay();
             const isWeekend = isSixDays ? (day === 5) : (day === 5 || day === 6);
             if (!isWeekend) {
                 potentialHours += 8;
+                potentialDays += 1;
             }
         }
 
         const workedHours = Math.max(0, potentialHours - (authorized + unauthorized));
 
-        return { authorized, unauthorized, potentialHours, workedHours };
+        // Calculate worked days (Potential Days - Full Day Absences)
+        // Partial absences count as a worked day (just fewer hours)
+        const fullDayAbsencesCount = currentMonthAbsences.filter((a: any) => a.isFullDay).length;
+        const workedDays = Math.max(0, potentialDays - fullDayAbsencesCount);
+
+        return { authorized, unauthorized, potentialHours, workedHours, potentialDays, workedDays };
     }, [absences, currentDate, isSixDays]);
 
     return (
@@ -292,7 +300,7 @@ export default function EmployeeAttendance({ employeeId }: AttendanceProps) {
                             Non autorisé : {monthlyTotals.unauthorized}h
                         </div>
                         <div style={{ color: '#1e40af', backgroundColor: '#dbeafe', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
-                            Travaillé : {monthlyTotals.workedHours}h / {monthlyTotals.potentialHours}h
+                            Travaillé : {monthlyTotals.workedDays}j / {monthlyTotals.potentialDays}j ({monthlyTotals.workedHours}h / {monthlyTotals.potentialHours}h)
                         </div>
                     </div>
                 </div>

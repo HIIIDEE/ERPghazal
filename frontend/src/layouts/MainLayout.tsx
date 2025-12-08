@@ -1,5 +1,5 @@
 import { Outlet, Link } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Settings, LogOut, Coins } from 'lucide-react';
 import { useAuthStore } from '../features/auth/authStore';
 
 export function MainLayout() {
@@ -18,6 +18,9 @@ export function MainLayout() {
                     </Link>
                     <Link to="/contracts" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '4px', transition: 'background 0.2s' }}>
                         <FileText size={20} /> Contrats
+                    </Link>
+                    <Link to="/payroll" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', borderRadius: '4px', transition: 'background 0.2s' }}>
+                        <Coins size={20} /> Paie
                     </Link>
                 </nav>
 
