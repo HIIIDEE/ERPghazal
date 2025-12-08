@@ -4,8 +4,10 @@ import { Dashboard } from './pages/Dashboard';
 import { Employees } from './pages/Employees';
 import { Login } from './pages/Login';
 import EmployeeDetails from './pages/EmployeeDetails';
+import { Contracts } from './pages/Contracts';
 import HrConfiguration from './features/hr/HrConfiguration';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { Payroll } from './pages/Payroll';
 
 function App() {
   return (
@@ -21,6 +23,8 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="employees" element={<Employees />} />
           <Route path="employees/:id" element={<EmployeeDetails />} />
+          <Route path="contracts" element={<Contracts />} />
+          <Route path="payroll" element={<Payroll />} />
           <Route path="config" element={<HrConfiguration />} />
         </Route>
 

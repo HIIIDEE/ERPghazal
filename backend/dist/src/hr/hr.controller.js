@@ -16,6 +16,7 @@ exports.HrController = void 0;
 const common_1 = require("@nestjs/common");
 const hr_service_1 = require("./hr.service");
 const create_employee_dto_1 = require("./dto/create-employee.dto");
+const create_payroll_bonus_dto_1 = require("./dto/create-payroll-bonus.dto");
 let HrController = class HrController {
     hrService;
     constructor(hrService) {
@@ -33,6 +34,9 @@ let HrController = class HrController {
     findOne(id) {
         return this.hrService.findOneEmployee(id);
     }
+    findAllContracts() {
+        return this.hrService.findAllContracts();
+    }
     createContract(data) {
         return this.hrService.createContract(data);
     }
@@ -41,6 +45,9 @@ let HrController = class HrController {
     }
     findAllPositions() {
         return this.hrService.findAllPositions();
+    }
+    findAllDepartments() {
+        return this.hrService.findAllDepartments();
     }
     createPosition(title) {
         return this.hrService.createPosition(title);
@@ -75,6 +82,47 @@ let HrController = class HrController {
     deleteAbsenceReason(id) {
         return this.hrService.deleteAbsenceReason(id);
     }
+    assignBonus(id, body) {
+        return this.hrService.assignBonusToEmployee(id, body.bonusId, body);
+    }
+    removeBonus(id, bonusId) {
+        return this.hrService.removeBonusFromEmployee(id, bonusId);
+    }
+    getEmployeeBonuses(id) {
+        return this.hrService.getEmployeeBonuses(id);
+    }
+    generatePayslips(body) {
+        return this.hrService.generatePayslips(body.employeeIds, body.month, body.year);
+    }
+    getPayslips(month, year) {
+        const monthNum = month ? parseInt(month) : undefined;
+        const yearNum = year ? parseInt(year) : undefined;
+        return this.hrService.getPayslips(monthNum, yearNum);
+    }
+    deletePayslip(id) {
+        return this.hrService.deletePayslip(id);
+    }
+    async downloadPayslipPDF(id, res) {
+        const pdfBuffer = await this.hrService.generatePayslipPDF(id);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename=bulletin-paie-${id}.pdf`,
+            'Content-Length': pdfBuffer.length,
+        });
+        res.end(pdfBuffer);
+    }
+    getContributions() {
+        return this.hrService.getAllContributions();
+    }
+    createContribution(data) {
+        return this.hrService.createContribution(data);
+    }
+    updateContribution(id, data) {
+        return this.hrService.updateContribution(id, data);
+    }
+    deleteContribution(id) {
+        return this.hrService.deleteContribution(id);
+    }
 };
 exports.HrController = HrController;
 __decorate([
@@ -106,6 +154,12 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], HrController.prototype, "findOne", null);
 __decorate([
+    (0, common_1.Get)('contracts'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], HrController.prototype, "findAllContracts", null);
+__decorate([
     (0, common_1.Post)('contracts'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -126,6 +180,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], HrController.prototype, "findAllPositions", null);
+__decorate([
+    (0, common_1.Get)('departments'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], HrController.prototype, "findAllDepartments", null);
 __decorate([
     (0, common_1.Post)('positions'),
     __param(0, (0, common_1.Body)('title')),
@@ -151,7 +211,7 @@ __decorate([
     (0, common_1.Post)('bonuses'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [create_payroll_bonus_dto_1.CreatePayrollBonusDto]),
     __metadata("design:returntype", void 0)
 ], HrController.prototype, "createBonus", null);
 __decorate([
@@ -202,6 +262,87 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], HrController.prototype, "deleteAbsenceReason", null);
+__decorate([
+    (0, common_1.Post)('employees/:id/bonuses'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], HrController.prototype, "assignBonus", null);
+__decorate([
+    (0, common_1.Delete)('employees/:id/bonuses/:bonusId'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Param)('bonusId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], HrController.prototype, "removeBonus", null);
+__decorate([
+    (0, common_1.Get)('employees/:id/bonuses'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], HrController.prototype, "getEmployeeBonuses", null);
+__decorate([
+    (0, common_1.Post)('payslips/generate'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], HrController.prototype, "generatePayslips", null);
+__decorate([
+    (0, common_1.Get)('payslips'),
+    __param(0, (0, common_1.Query)('month')),
+    __param(1, (0, common_1.Query)('year')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], HrController.prototype, "getPayslips", null);
+__decorate([
+    (0, common_1.Delete)('payslips/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], HrController.prototype, "deletePayslip", null);
+__decorate([
+    (0, common_1.Get)('payslips/:id/pdf'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], HrController.prototype, "downloadPayslipPDF", null);
+__decorate([
+    (0, common_1.Get)('contributions'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], HrController.prototype, "getContributions", null);
+__decorate([
+    (0, common_1.Post)('contributions'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], HrController.prototype, "createContribution", null);
+__decorate([
+    (0, common_1.Put)('contributions/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], HrController.prototype, "updateContribution", null);
+__decorate([
+    (0, common_1.Delete)('contributions/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], HrController.prototype, "deleteContribution", null);
 exports.HrController = HrController = __decorate([
     (0, common_1.Controller)('hr'),
     __metadata("design:paramtypes", [hr_service_1.HrService])

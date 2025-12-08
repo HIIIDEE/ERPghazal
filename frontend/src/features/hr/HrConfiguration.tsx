@@ -1,27 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useEmployeeStore } from './employeeStore';
-import { Settings, Shield, Coins, Plus, Trash2, CalendarX } from 'lucide-react';
+import { Settings, Shield, Plus, Trash2, CalendarX } from 'lucide-react';
 
 export default function HrConfiguration() {
-    const [activeTab, setActiveTab] = useState<'positions' | 'bonuses' | 'reasons'>('positions');
+    const [activeTab, setActiveTab] = useState<'positions' | 'reasons'>('positions');
 
     // Store
     const {
         positions, fetchPositions, createPosition,
-        payrollBonuses, fetchPayrollBonuses, createPayrollBonus, deletePayrollBonus,
         absenceReasons, fetchAbsenceReasons, createAbsenceReason, deleteAbsenceReason
     } = useEmployeeStore();
 
     // Local state for forms
     const [newPosition, setNewPosition] = useState('');
-    const [newBonus, setNewBonus] = useState({ name: '', isCotisable: false });
     const [newReason, setNewReason] = useState({ name: '', isAuthorized: true });
 
     useEffect(() => {
         if (activeTab === 'positions') fetchPositions();
-        if (activeTab === 'bonuses') fetchPayrollBonuses();
         if (activeTab === 'reasons') fetchAbsenceReasons();
-    }, [activeTab, fetchPositions, fetchPayrollBonuses, fetchAbsenceReasons]);
+    }, [activeTab, fetchPositions, fetchAbsenceReasons]);
 
     const handleCreatePosition = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -31,13 +28,7 @@ export default function HrConfiguration() {
         }
     };
 
-    const handleCreateBonus = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (newBonus.name.trim()) {
-            await createPayrollBonus(newBonus);
-            setNewBonus({ name: '', isCotisable: false });
-        }
-    };
+
 
     const handleCreateReason = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -67,12 +58,7 @@ export default function HrConfiguration() {
                 >
                     <Shield size={18} /> Postes
                 </button>
-                <button
-                    onClick={() => setActiveTab('bonuses')}
-                    style={{ ...tabStyle, borderBottom: activeTab === 'bonuses' ? '2px solid #4338ca' : '2px solid transparent', color: activeTab === 'bonuses' ? '#4338ca' : '#64748b' }}
-                >
-                    <Coins size={18} /> Primes
-                </button>
+
                 <button
                     onClick={() => setActiveTab('reasons')}
                     style={{ ...tabStyle, borderBottom: activeTab === 'reasons' ? '2px solid #4338ca' : '2px solid transparent', color: activeTab === 'reasons' ? '#4338ca' : '#64748b' }}
@@ -126,66 +112,7 @@ export default function HrConfiguration() {
                     </div>
                 )}
 
-                {/* BONUSES TAB */}
-                {activeTab === 'bonuses' && (
-                    <div>
-                        <div style={{ padding: '1.5rem', borderBottom: '1px solid #f3f4f6', backgroundColor: '#f9fafb' }}>
-                            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Ajouter une prime</h3>
-                            <form onSubmit={handleCreateBonus} style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                <input
-                                    type="text"
-                                    value={newBonus.name}
-                                    onChange={(e) => setNewBonus({ ...newBonus, name: e.target.value })}
-                                    placeholder="Nom de la prime (ex: Prime de Panier)"
-                                    style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #d1d5db' }}
-                                />
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={newBonus.isCotisable}
-                                        onChange={(e) => setNewBonus({ ...newBonus, isCotisable: e.target.checked })}
-                                        style={{ width: '1.25rem', height: '1.25rem' }}
-                                    />
-                                    <span style={{ fontWeight: 500 }}>Cotisable ?</span>
-                                </label>
-                                <button type="submit" disabled={!newBonus.name.trim()} style={btnStyle}>
-                                    <Plus size={18} /> Ajouter
-                                </button>
-                            </form>
-                        </div>
-                        <div style={{ padding: '0' }}>
-                            {payrollBonuses.length === 0 ? <EmptyState text="Aucune prime configurée." /> : (
-                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ backgroundColor: '#f8fafc', textAlign: 'left' }}>
-                                            <th style={thStyle}>Nom de la prime</th>
-                                            <th style={thStyle}>Type</th>
-                                            <th style={thStyle}>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {payrollBonuses.map((bonus: any) => (
-                                            <tr key={bonus.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                                                <td style={tdStyle}>{bonus.name}</td>
-                                                <td style={tdStyle}>
-                                                    {bonus.isCotisable ?
-                                                        <span style={{ ...badgeStyle, backgroundColor: '#dcfce7', color: '#166534' }}>Cotisable</span> :
-                                                        <span style={{ ...badgeStyle, backgroundColor: '#f3f4f6', color: '#6b7280' }}>Non Cotisable</span>
-                                                    }
-                                                </td>
-                                                <td style={tdStyle}>
-                                                    <button onClick={() => deletePayrollBonus(bonus.id)} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}>
-                                                        <Trash2 size={18} />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
-                        </div>
-                    </div>
-                )}
+
 
                 {/* ABSENCE REASONS TAB */}
                 {activeTab === 'reasons' && (

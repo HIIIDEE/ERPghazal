@@ -9,4 +9,13 @@ export declare class CreateContractDto {
     workingSchedule?: string;
     scheduledPay?: string;
     employeeId: string;
+    hourlyWage?: number;
+    weeklyHours?: number;
+    classification?: string;
+    coefficient?: string;
+    benefits?: any;
+    cnasScheme?: string;
+    fiscalScheme?: string;
+    executiveStatus?: string;
+    trialPeriodDuration?: number;
 }

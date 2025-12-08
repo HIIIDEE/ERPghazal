@@ -35,4 +35,39 @@ export class CreateContractDto {
     @IsNotEmpty()
     @IsString()
     employeeId: string;
+
+    @IsOptional()
+    @IsNumber()
+    hourlyWage?: number;
+
+    @IsOptional()
+    @IsNumber()
+    weeklyHours?: number;
+
+    @IsOptional()
+    @IsString()
+    classification?: string;
+
+    @IsOptional()
+    @IsString()
+    coefficient?: string;
+
+    @IsOptional()
+    benefits?: any;
+
+    @IsOptional()
+    @IsString() // Enum
+    cnasScheme?: string;
+
+    @IsOptional()
+    @IsString() // Enum
+    fiscalScheme?: string;
+
+    @IsOptional()
+    @IsString() // Enum
+    executiveStatus?: string;
+
+    @IsOptional()
+    @IsNumber()
+    trialPeriodDuration?: number;
 }
