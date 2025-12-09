@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { usePayslipCalculation } from '../../hooks/usePayslipCalculation';
 
 interface PayslipTableProps {

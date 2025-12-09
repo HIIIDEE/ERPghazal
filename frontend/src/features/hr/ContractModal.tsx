@@ -30,11 +30,12 @@ interface ContractFormData {
     workSchedule?: string;
     scheduledPay?: string;
     reference?: string;
+    salaryStructureId?: string;
 }
 
 export function ContractModal({ employeeId, contract, onClose, previousContractId }: ContractModalProps) {
     const { register, handleSubmit, reset, setValue, watch } = useForm<ContractFormData>();
-    const { createContract, updateContract, employees, fetchEmployees } = useEmployeeStore();
+    const { createContract, updateContract, employees, fetchEmployees, salaryStructures, fetchSalaryStructures } = useEmployeeStore();
 
     // Watch fields for conditional logic
     const contractType = watch('type');
@@ -63,7 +64,8 @@ export function ContractModal({ employeeId, contract, onClose, previousContractI
         if (needsEmployeeSelection && employees.length === 0) {
             fetchEmployees();
         }
-    }, [needsEmployeeSelection, employees.length, fetchEmployees]);
+        fetchSalaryStructures();
+    }, [needsEmployeeSelection, employees.length, fetchEmployees, fetchSalaryStructures]);
 
     useEffect(() => {
         if (contract) {
@@ -86,6 +88,7 @@ export function ContractModal({ employeeId, contract, onClose, previousContractI
             setValue('workSchedule', contract.workSchedule || 'FIVE_DAYS');
             setValue('scheduledPay', contract.scheduledPay || '');
             setValue('reference', contract.reference || '');
+            setValue('salaryStructureId', contract.salaryStructureId || '');
             if (contract.employeeId) {
                 setValue('employeeId', contract.employeeId);
             }
@@ -120,6 +123,7 @@ export function ContractModal({ employeeId, contract, onClose, previousContractI
             endDate: data.endDate || undefined,
             trialPeriodEndDate: data.trialPeriodEndDate || undefined,
             reference: data.reference || undefined,
+            salaryStructureId: data.salaryStructureId || undefined,
             previousContractId: previousContractId || undefined
         };
 
@@ -270,6 +274,21 @@ export function ContractModal({ employeeId, contract, onClose, previousContractI
                         <div>
                             <label style={labelStyle}>Coefficient</label>
                             <input type="text" {...register('coefficient')} style={inputStyle} placeholder="Ex: 120" />
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+                        <div>
+                            <label style={labelStyle}>Structure Salariale</label>
+                            <select {...register('salaryStructureId')} style={inputStyle}>
+                                <option value="">Aucune (Règles individuelles uniquement)</option>
+                                {salaryStructures.map(struct => (
+                                    <option key={struct.id} value={struct.id}>{struct.name}</option>
+                                ))}
+                            </select>
+                            <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>
+                                Les règles de cette structure seront appliquées automatiquement.
+                            </p>
                         </div>
                     </div>
 

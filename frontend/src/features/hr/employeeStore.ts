@@ -56,6 +56,42 @@ export interface Employee {
         startDate: string;
         endDate?: string;
         frequency: 'MONTHLY' | 'PONCTUELLE';
+        bonus?: {
+            id: string;
+            name: string;
+            calculationMode: 'FIXE' | 'POURCENTAGE';
+            amount?: number;
+            percentage?: number;
+        };
+    }[];
+
+}
+
+export interface Rubrique {
+    id: number;
+    code: string;
+    nom: string;
+    type: 'GAIN' | 'RETENUE' | 'COTISATION' | 'BASE';
+    montantType: 'FIXE' | 'POURCENTAGE' | 'FORMULE' | 'SAISIE';
+    valeur?: number;
+    formule?: string;
+    soumisCnas: boolean;
+    soumisIrg: boolean;
+    soumisChargeEmployeur: boolean;
+    ordreAffichage?: number;
+}
+
+export interface SalaryStructure {
+    id: string;
+    name: string;
+    description?: string;
+    isActive: boolean;
+    _count?: {
+        rubriques: number;
+    };
+    rubriques?: {
+        rubrique: Rubrique;
+        ordre: number;
     }[];
 }
 
@@ -100,6 +136,20 @@ interface EmployeeState {
     generatePayslips: (employeeIds: string[], month: number, year: number) => Promise<void>;
     fetchPayslips: (month?: number, year?: number) => Promise<void>;
     deletePayslip: (id: string) => Promise<void>;
+    // Rubriques
+    rubriques: Rubrique[];
+    fetchRubriques: () => Promise<void>;
+    createRubrique: (data: any) => Promise<void>;
+    updateRubrique: (id: number, data: any) => Promise<void>;
+    deleteRubrique: (id: number) => Promise<void>;
+    // Salary Structures
+    salaryStructures: SalaryStructure[];
+    fetchSalaryStructures: () => Promise<void>;
+    createSalaryStructure: (data: any) => Promise<void>;
+    updateSalaryStructure: (id: string, data: any) => Promise<void>;
+    deleteSalaryStructure: (id: string) => Promise<void>;
+    addRubriqueToStructure: (structureId: string, rubriqueId: number, ordre: number) => Promise<void>;
+    removeRubriqueFromStructure: (structureId: string, rubriqueId: number) => Promise<void>;
 }
 
 export const useEmployeeStore = create<EmployeeState>((set, get) => ({
@@ -108,6 +158,8 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
     positions: [],
     departments: [],
     payrollBonuses: [],
+    rubriques: [],
+    salaryStructures: [],
     loading: false,
     error: null,
     fetchEmployees: async () => {
@@ -348,6 +400,88 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
         try {
             await api.delete(`/hr/payslips/${id}`);
             get().fetchPayslips();
+        } catch (error) {
+            throw error;
+        }
+    },
+    // Rubriques
+    fetchRubriques: async () => {
+        try {
+            const res = await api.get('/hr/rubriques');
+            set({ rubriques: res.data });
+        } catch (error) {
+            console.error(error);
+        }
+    },
+    createRubrique: async (data) => {
+        try {
+            await api.post('/hr/rubriques', data);
+            get().fetchRubriques();
+        } catch (error) {
+            throw error;
+        }
+    },
+    updateRubrique: async (id, data) => {
+        try {
+            await api.put(`/hr/rubriques/${id}`, data);
+            get().fetchRubriques();
+        } catch (error) {
+            throw error;
+        }
+    },
+    deleteRubrique: async (id) => {
+        try {
+            await api.delete(`/hr/rubriques/${id}`);
+            get().fetchRubriques();
+        } catch (error) {
+            throw error;
+        }
+    },
+    // Salary Structures
+    fetchSalaryStructures: async () => {
+        try {
+            const res = await api.get('/hr/salary-structures');
+            set({ salaryStructures: res.data });
+        } catch (error) {
+            console.error(error);
+        }
+    },
+    createSalaryStructure: async (data) => {
+        try {
+            await api.post('/hr/salary-structures', data);
+            get().fetchSalaryStructures();
+        } catch (error) {
+            throw error;
+        }
+    },
+    updateSalaryStructure: async (id, data) => {
+        try {
+            await api.put(`/hr/salary-structures/${id}`, data);
+            get().fetchSalaryStructures();
+        } catch (error) {
+            throw error;
+        }
+    },
+    deleteSalaryStructure: async (id) => {
+        try {
+            await api.delete(`/hr/salary-structures/${id}`);
+            get().fetchSalaryStructures();
+        } catch (error) {
+            throw error;
+        }
+    },
+    addRubriqueToStructure: async (structureId, rubriqueId, ordre) => {
+        try {
+            await api.post(`/hr/salary-structures/${structureId}/rubriques`, { rubriqueId, ordre });
+            get().fetchSalaryStructures(); // Refresh list to update counts/details
+        } catch (error) {
+            throw error;
+        }
+    },
+    removeRubriqueFromStructure: async (structureId, rubriqueId) => {
+        try {
+            await api.delete(`/hr/salary-structures/${structureId}/rubriques/${rubriqueId}`);
+            get().fetchSalaryStructures();
         } catch (error) {
             throw error;
         }
