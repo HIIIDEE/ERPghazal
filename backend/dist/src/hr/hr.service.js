@@ -8,18 +8,23 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HrService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
-const pdfkit_1 = __importDefault(require("pdfkit"));
+const payroll_calculation_service_1 = require("./services/payroll-calculation.service");
+const pdf_generation_service_1 = require("./services/pdf-generation.service");
+const rubrique_calculation_service_1 = require("./services/rubrique-calculation.service");
 let HrService = class HrService {
     prisma;
-    constructor(prisma) {
+    payrollCalc;
+    pdfGen;
+    rubriqueCalc;
+    constructor(prisma, payrollCalc, pdfGen, rubriqueCalc) {
         this.prisma = prisma;
+        this.payrollCalc = payrollCalc;
+        this.pdfGen = pdfGen;
+        this.rubriqueCalc = rubriqueCalc;
     }
     async createEmployee(data) {
         try {
@@ -286,152 +291,116 @@ let HrService = class HrService {
         return this.prisma.absenceReason.delete({ where: { id } });
     }
     async generatePayslips(employeeIds, month, year) {
-        const payslips = [];
-        const employeeContributions = await this.prisma.socialContribution.findMany({
-            where: { type: 'EMPLOYEE', isActive: true }
-        });
-        const employerContributions = await this.prisma.socialContribution.findMany({
-            where: { type: 'EMPLOYER', isActive: true }
-        });
-        for (const employeeId of employeeIds) {
-            const employee = await this.prisma.employee.findUnique({
-                where: { id: employeeId },
+        const [employeeContributions, employerContributions, employees] = await Promise.all([
+            this.prisma.socialContribution.findMany({
+                where: { type: 'EMPLOYEE', isActive: true }
+            }),
+            this.prisma.socialContribution.findMany({
+                where: { type: 'EMPLOYER', isActive: true }
+            }),
+            this.prisma.employee.findMany({
+                where: { id: { in: employeeIds } },
                 include: {
                     contracts: true,
                     bonuses: {
                         include: { bonus: true }
                     }
                 }
-            });
-            if (!employee)
-                continue;
-            const activeContract = employee.contracts.find(c => !c.endDate || new Date(c.endDate) > new Date());
-            if (!activeContract)
-                continue;
-            const baseSalary = activeContract.wage || 0;
-            const startOfMonth = new Date(year, month, 1);
-            const endOfMonth = new Date(year, month + 1, 0);
-            let totalBonuses = 0;
-            for (const eb of employee.bonuses) {
-                const bonusStart = new Date(eb.startDate);
-                const bonusEnd = eb.endDate ? new Date(eb.endDate) : null;
-                if (bonusStart > endOfMonth)
-                    continue;
-                if (bonusEnd && bonusEnd < startOfMonth)
-                    continue;
-                let isValid = false;
-                if (eb.frequency === 'PONCTUELLE') {
-                    isValid = bonusStart.getMonth() === month && bonusStart.getFullYear() === year;
-                }
-                else {
-                    isValid = true;
-                }
-                if (!isValid)
-                    continue;
-                let value = 0;
-                if (eb.amount !== null && eb.amount !== undefined) {
-                    value = eb.amount;
-                }
-                else if (eb.bonus) {
-                    if (eb.bonus.calculationMode === 'FIXE') {
-                        value = eb.bonus.amount || 0;
-                    }
-                    else {
-                        value = (baseSalary * (eb.bonus.percentage || 0)) / 100;
-                    }
-                }
-                totalBonuses += value;
-            }
-            const grossSalary = baseSalary + totalBonuses;
-            const employeeContribsDetail = {};
-            let totalEmployeeContribs = 0;
-            for (const contrib of employeeContributions) {
-                const amount = (grossSalary * contrib.rate) / 100;
-                employeeContribsDetail[contrib.code] = {
-                    name: contrib.name,
-                    rate: contrib.rate,
-                    amount: Math.round(amount * 100) / 100
-                };
-                totalEmployeeContribs += amount;
-            }
-            const taxableSalary = grossSalary - totalEmployeeContribs;
-            const incomeTax = this.calculateIRG(taxableSalary);
-            const netSalary = taxableSalary - incomeTax;
-            const employerContribsDetail = {};
-            let totalEmployerContribs = 0;
-            for (const contrib of employerContributions) {
-                const amount = (grossSalary * contrib.rate) / 100;
-                employerContribsDetail[contrib.code] = {
-                    name: contrib.name,
-                    rate: contrib.rate,
-                    amount: Math.round(amount * 100) / 100
-                };
-                totalEmployerContribs += amount;
-            }
-            const payslip = await this.prisma.payslip.upsert({
-                where: {
-                    employeeId_month_year: {
-                        employeeId,
-                        month,
-                        year
-                    }
-                },
-                update: {
-                    baseSalary,
-                    bonuses: totalBonuses,
-                    grossSalary,
-                    employeeContributions: employeeContribsDetail,
-                    totalEmployeeContributions: Math.round(totalEmployeeContribs * 100) / 100,
-                    taxableSalary: Math.round(taxableSalary * 100) / 100,
-                    incomeTax: Math.round(incomeTax * 100) / 100,
-                    netSalary: Math.round(netSalary * 100) / 100,
-                    employerContributions: employerContribsDetail,
-                    totalEmployerContributions: Math.round(totalEmployerContribs * 100) / 100,
-                    status: 'DRAFT'
-                },
-                create: {
-                    employeeId,
+            })
+        ]);
+        const payslipData = await Promise.all(employees.map(employee => this.preparePayslipData(employee, month, year, employeeContributions, employerContributions)));
+        const validPayslipData = payslipData.filter(data => data !== null);
+        const payslips = await Promise.all(validPayslipData.map(data => this.prisma.payslip.upsert({
+            where: {
+                employeeId_month_year: {
+                    employeeId: data.employeeId,
                     month,
-                    year,
-                    baseSalary,
-                    bonuses: totalBonuses,
-                    grossSalary,
-                    employeeContributions: employeeContribsDetail,
-                    totalEmployeeContributions: Math.round(totalEmployeeContribs * 100) / 100,
-                    taxableSalary: Math.round(taxableSalary * 100) / 100,
-                    incomeTax: Math.round(incomeTax * 100) / 100,
-                    netSalary: Math.round(netSalary * 100) / 100,
-                    employerContributions: employerContribsDetail,
-                    totalEmployerContributions: Math.round(totalEmployerContribs * 100) / 100,
-                    status: 'DRAFT'
-                },
-                include: {
-                    employee: {
-                        include: {
-                            department: true,
-                            position: true
-                        }
+                    year
+                }
+            },
+            update: data.payslipFields,
+            create: {
+                employeeId: data.employeeId,
+                month,
+                year,
+                ...data.payslipFields
+            },
+            include: {
+                employee: {
+                    include: {
+                        department: true,
+                        position: true
                     }
                 }
-            });
-            payslips.push(payslip);
-        }
+            }
+        })));
         return payslips;
     }
-    calculateIRG(taxableSalary) {
-        if (taxableSalary <= 30000)
-            return 0;
-        let irg = 0;
-        if (taxableSalary > 30000 && taxableSalary <= 120000) {
-            irg = (taxableSalary - 30000) * 0.20;
+    async preparePayslipData(employee, month, year, employeeContributions, employerContributions) {
+        const activeContract = employee.contracts.find((c) => !c.endDate || new Date(c.endDate) > new Date());
+        if (!activeContract)
+            return null;
+        const baseSalary = Number(activeContract.wage) || 0;
+        const calculatedRubriques = await this.rubriqueCalc.calculateEmployeeRubriques({
+            employeeId: employee.id,
+            month,
+            year,
+            baseSalary
+        });
+        let grossSalary = 0;
+        let taxableSalary = 0;
+        let totalEmployeeContributions = 0;
+        let totalEmployerContributions = 0;
+        let incomeTax = 0;
+        let bonuses = 0;
+        let netSalary = 0;
+        const empContribDetails = {};
+        const emplerContribDetails = {};
+        for (const r of calculatedRubriques) {
+            if (r.type === 'GAIN') {
+                grossSalary += r.montant;
+                bonuses += r.montant;
+            }
+            else if (r.type === 'BASE') {
+                grossSalary += r.montant;
+            }
+            else if (r.type === 'RETENUE') {
+                if (r.code === 'SS' || r.code === 'CNAS') {
+                    totalEmployeeContributions += r.montant;
+                    empContribDetails[r.code] = { name: r.nom, amount: r.montant, rate: r.taux };
+                }
+                else if (r.code === 'IRG') {
+                    incomeTax += r.montant;
+                }
+                else {
+                }
+            }
+            else if (r.type === 'COTISATION') {
+                totalEmployerContributions += r.montant;
+                emplerContribDetails[r.code] = { name: r.nom, amount: r.montant, rate: r.taux };
+            }
         }
-        else if (taxableSalary > 120000 && taxableSalary <= 360000) {
-            irg = 18000 + (taxableSalary - 120000) * 0.30;
-        }
-        else if (taxableSalary > 360000) {
-            irg = 90000 + (taxableSalary - 360000) * 0.35;
-        }
-        return Math.round(irg * 100) / 100;
+        taxableSalary = grossSalary - totalEmployeeContributions;
+        const totalRetenues = calculatedRubriques
+            .filter(r => r.type === 'RETENUE')
+            .reduce((sum, r) => sum + r.montant, 0);
+        netSalary = grossSalary - totalRetenues;
+        return {
+            employeeId: employee.id,
+            payslipFields: {
+                baseSalary: baseSalary,
+                bonuses: bonuses,
+                grossSalary: grossSalary,
+                employeeContributions: empContribDetails,
+                totalEmployeeContributions: totalEmployeeContributions,
+                taxableSalary: taxableSalary,
+                incomeTax: incomeTax,
+                netSalary: netSalary,
+                employerContributions: emplerContribDetails,
+                totalEmployerContributions: totalEmployerContributions,
+                status: 'DRAFT'
+            }
+        };
     }
     async getPayslips(month, year) {
         const where = {};
@@ -494,104 +463,15 @@ let HrService = class HrService {
         if (!payslip) {
             throw new Error('Bulletin de paie non trouvé');
         }
-        return new Promise((resolve, reject) => {
-            const doc = new pdfkit_1.default({ size: 'A4', margin: 50 });
-            const chunks = [];
-            doc.on('data', (chunk) => chunks.push(chunk));
-            doc.on('end', () => resolve(Buffer.concat(chunks)));
-            doc.on('error', reject);
-            doc.fontSize(20).text('BULLETIN DE PAIE', { align: 'center' });
-            doc.moveDown();
-            const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-                'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-            doc.fontSize(12).text(`Période: ${monthNames[payslip.month - 1]} ${payslip.year}`, { align: 'center' });
-            doc.moveDown(2);
-            doc.fontSize(14).text('INFORMATIONS EMPLOYÉ', { underline: true });
-            doc.moveDown(0.5);
-            doc.fontSize(10);
-            doc.text(`Nom: ${payslip.employee.lastName} ${payslip.employee.firstName}`);
-            doc.text(`Matricule: ${payslip.employee.badgeId || 'N/A'}`);
-            doc.text(`Poste: ${payslip.employee.position?.title || 'N/A'}`);
-            doc.text(`Département: ${payslip.employee.department?.name || 'N/A'}`);
-            if (payslip.employee.socialSecurityNumber) {
-                doc.text(`N° Sécurité Sociale: ${payslip.employee.socialSecurityNumber}`);
-            }
-            doc.moveDown(2);
-            doc.fontSize(14).text('DÉTAILS DE LA RÉMUNÉRATION', { underline: true });
-            doc.moveDown(0.5);
-            const lineY = doc.y;
-            doc.fontSize(10);
-            doc.text('Salaire de base:', 50, doc.y);
-            doc.text(`${payslip.baseSalary.toFixed(2)} DA`, 400, doc.y, { align: 'right' });
-            doc.moveDown();
-            if (payslip.bonuses > 0) {
-                doc.text('Primes et indemnités:', 50, doc.y);
-                doc.text(`${payslip.bonuses.toFixed(2)} DA`, 400, doc.y, { align: 'right' });
-                doc.moveDown();
-            }
-            doc.fontSize(11).font('Helvetica-Bold');
-            doc.text('Salaire Brut:', 50, doc.y);
-            doc.text(`${payslip.grossSalary.toFixed(2)} DA`, 400, doc.y, { align: 'right' });
-            doc.font('Helvetica').fontSize(10);
-            doc.moveDown(1.5);
-            doc.fontSize(14).text('COTISATIONS SALARIALES (déduites du brut)', { underline: true });
-            doc.moveDown(0.5);
-            doc.fontSize(10);
-            const employeeContribs = payslip.employeeContributions || {};
-            for (const [code, detail] of Object.entries(employeeContribs)) {
-                const contrib = detail;
-                doc.text(`${contrib.name} (${contrib.rate}%):`, 50, doc.y);
-                doc.text(`${contrib.amount.toFixed(2)} DA`, 400, doc.y, { align: 'right' });
-                doc.moveDown();
-            }
-            doc.font('Helvetica-Bold');
-            doc.text('Total Cotisations Salariales:', 50, doc.y);
-            doc.text(`${payslip.totalEmployeeContributions.toFixed(2)} DA`, 400, doc.y, { align: 'right' });
-            doc.font('Helvetica');
-            doc.moveDown(1.5);
-            doc.fontSize(11).font('Helvetica-Bold');
-            doc.text('Salaire Imposable:', 50, doc.y);
-            doc.text(`${payslip.taxableSalary.toFixed(2)} DA`, 400, doc.y, { align: 'right' });
-            doc.font('Helvetica').fontSize(10);
-            doc.moveDown(1.5);
-            doc.fontSize(14).text('IMPÔT SUR LE REVENU GLOBAL (IRG)', { underline: true });
-            doc.moveDown(0.5);
-            doc.fontSize(10);
-            doc.text('IRG retenu à la source:', 50, doc.y);
-            doc.text(`${payslip.incomeTax.toFixed(2)} DA`, 400, doc.y, { align: 'right' });
-            doc.moveDown(2);
-            doc.fontSize(16).font('Helvetica-Bold');
-            doc.fillColor('#006400');
-            doc.text('SALAIRE NET À PAYER:', 50, doc.y);
-            doc.text(`${payslip.netSalary.toFixed(2)} DA`, 400, doc.y, { align: 'right' });
-            doc.fillColor('#000000');
-            doc.font('Helvetica').fontSize(10);
-            doc.moveDown(2);
-            doc.fontSize(14).text('COTISATIONS PATRONALES (à titre informatif)', { underline: true });
-            doc.moveDown(0.5);
-            doc.fontSize(10);
-            const employerContribs = payslip.employerContributions || {};
-            for (const [code, detail] of Object.entries(employerContribs)) {
-                const contrib = detail;
-                doc.text(`${contrib.name} (${contrib.rate}%):`, 50, doc.y);
-                doc.text(`${contrib.amount.toFixed(2)} DA`, 400, doc.y, { align: 'right' });
-                doc.moveDown();
-            }
-            doc.font('Helvetica-Bold');
-            doc.text('Total Cotisations Patronales:', 50, doc.y);
-            doc.text(`${payslip.totalEmployerContributions.toFixed(2)} DA`, 400, doc.y, { align: 'right' });
-            doc.font('Helvetica');
-            doc.moveDown(2);
-            doc.fontSize(8).fillColor('#666666');
-            doc.text('Ce document est généré automatiquement par le système ERP Ghazal', { align: 'center' });
-            doc.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')}`, { align: 'center' });
-            doc.end();
-        });
+        return this.pdfGen.generatePayslipPDF(payslip);
     }
 };
 exports.HrService = HrService;
 exports.HrService = HrService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        payroll_calculation_service_1.PayrollCalculationService,
+        pdf_generation_service_1.PdfGenerationService,
+        rubrique_calculation_service_1.RubriqueCalculationService])
 ], HrService);
 //# sourceMappingURL=hr.service.js.map

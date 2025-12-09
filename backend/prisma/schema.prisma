@@ -172,6 +172,7 @@ model Employee {
   documents    Document[]
   bonuses      EmployeeBonus[]
   payslips     Payslip[]
+  rubriques    EmployeeRubrique[]
 
   hireDate     DateTime
   createdAt    DateTime   @default(now())
@@ -263,6 +264,10 @@ model Contract {
   employeeId  String
   employee    Employee       @relation(fields: [employeeId], references: [id])
   
+  // Salary Structure
+  salaryStructureId String?
+  salaryStructure   SalaryStructure? @relation(fields: [salaryStructureId], references: [id])
+  
   // Amendments
   previousContractId String?   @unique // One-to-one for chain
   previousContract   Contract? @relation("ContractHistory", fields: [previousContractId], references: [id])
@@ -272,6 +277,34 @@ model Contract {
   
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+}
+
+model SalaryStructure {
+  id          String   @id @default(uuid())
+  name        String   @unique // Ex: "Structure Cadre", "Structure Standard"
+  description String?
+  isActive    Boolean  @default(true)
+
+  rubriques   StructureRubrique[]
+  contracts   Contract[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StructureRubrique {
+  id                String          @id @default(uuid())
+  salaryStructureId String
+  salaryStructure   SalaryStructure @relation(fields: [salaryStructureId], references: [id], onDelete: Cascade)
+  rubriqueId        Int
+  rubrique          Rubrique        @relation(fields: [rubriqueId], references: [id], onDelete: Cascade)
+
+  ordre             Int             @default(0) // Order within this structure
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([salaryStructureId, rubriqueId])
 }
 
 model Attendance {
@@ -439,4 +472,96 @@ model Payslip {
   updatedAt       DateTime @updatedAt
 
   @@unique([employeeId, month, year])
+}
+
+enum RubriqueType {
+  GAIN
+  RETENUE
+  COTISATION
+  BASE
+}
+
+enum RubriqueMontantType {
+  FIXE
+  POURCENTAGE
+  FORMULE
+  SAISIE
+}
+
+model Rubrique {
+  id                    Int      @id @default(autoincrement())
+  code                  String   @unique
+  nom                   String
+  type                  RubriqueType
+  montantType           RubriqueMontantType
+  valeur                Decimal? @db.Decimal(10, 2)
+  formule               String?
+  soumisCnas            Boolean  @default(false)
+  soumisIrg             Boolean  @default(false)
+  soumisChargeEmployeur Boolean  @default(false)
+  ordreAffichage        Int?
+  isActive              Boolean  @default(true)
+
+  employeeRubriques     EmployeeRubrique[]
+  structures            StructureRubrique[]
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model EmployeeRubrique {
+  id          String   @id @default(uuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  rubriqueId  Int
+  rubrique    Rubrique @relation(fields: [rubriqueId], references: [id], onDelete: Cascade)
+
+  // Override values (optional)
+  montantOverride  Decimal? @db.Decimal(10, 2)
+  tauxOverride     Decimal? @db.Decimal(5, 2)
+
+  // Date range
+  startDate   DateTime
+  endDate     DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([employeeId, rubriqueId, startDate])
+}
+
+model PayrollParameter {
+  id          String   @id @default(uuid())
+  code        String   @unique // Ex: SNMG, PLAFOND_CNAS, POINT_INDICE
+  nom         String
+  valeur      Decimal  @db.Decimal(12, 2)
+  description String?
+
+  // Date range for historical values
+  startDate   DateTime
+  endDate     DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([code, startDate])
+}
+
+model TaxBracket {
+  id          String   @id @default(uuid())
+  nom         String   // Ex: "Tranche 1", "Tranche 2"
+  minAmount   Decimal  @db.Decimal(12, 2)
+  maxAmount   Decimal? @db.Decimal(12, 2) // NULL = illimité
+  rate        Decimal  @db.Decimal(5, 2)  // Taux en %
+  fixedAmount Decimal  @db.Decimal(12, 2) @default(0) // Montant fixe de base
+  ordre       Int
+
+  // Date range for historical brackets
+  startDate   DateTime
+  endDate     DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([startDate, ordre])
 }

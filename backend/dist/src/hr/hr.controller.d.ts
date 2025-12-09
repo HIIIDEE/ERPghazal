@@ -96,6 +96,7 @@ export declare class HrController {
                 workSchedule: import("@prisma/client").$Enums.WorkSchedule;
                 scheduledPay: string | null;
                 fileUrl: string | null;
+                salaryStructureId: string | null;
                 previousContractId: string | null;
                 employeeId: string;
             } | null;
@@ -123,6 +124,7 @@ export declare class HrController {
                 workSchedule: import("@prisma/client").$Enums.WorkSchedule;
                 scheduledPay: string | null;
                 fileUrl: string | null;
+                salaryStructureId: string | null;
                 previousContractId: string | null;
                 employeeId: string;
             } | null;
@@ -150,6 +152,7 @@ export declare class HrController {
             workSchedule: import("@prisma/client").$Enums.WorkSchedule;
             scheduledPay: string | null;
             fileUrl: string | null;
+            salaryStructureId: string | null;
             previousContractId: string | null;
             employeeId: string;
         })[];
@@ -335,6 +338,7 @@ export declare class HrController {
                 workSchedule: import("@prisma/client").$Enums.WorkSchedule;
                 scheduledPay: string | null;
                 fileUrl: string | null;
+                salaryStructureId: string | null;
                 previousContractId: string | null;
                 employeeId: string;
             } | null;
@@ -362,6 +366,7 @@ export declare class HrController {
                 workSchedule: import("@prisma/client").$Enums.WorkSchedule;
                 scheduledPay: string | null;
                 fileUrl: string | null;
+                salaryStructureId: string | null;
                 previousContractId: string | null;
                 employeeId: string;
             } | null;
@@ -389,6 +394,7 @@ export declare class HrController {
             workSchedule: import("@prisma/client").$Enums.WorkSchedule;
             scheduledPay: string | null;
             fileUrl: string | null;
+            salaryStructureId: string | null;
             previousContractId: string | null;
             employeeId: string;
         })[];
@@ -545,6 +551,7 @@ export declare class HrController {
             workSchedule: import("@prisma/client").$Enums.WorkSchedule;
             scheduledPay: string | null;
             fileUrl: string | null;
+            salaryStructureId: string | null;
             previousContractId: string | null;
             employeeId: string;
         } | null;
@@ -572,6 +579,7 @@ export declare class HrController {
             workSchedule: import("@prisma/client").$Enums.WorkSchedule;
             scheduledPay: string | null;
             fileUrl: string | null;
+            salaryStructureId: string | null;
             previousContractId: string | null;
             employeeId: string;
         } | null;
@@ -599,6 +607,7 @@ export declare class HrController {
         workSchedule: import("@prisma/client").$Enums.WorkSchedule;
         scheduledPay: string | null;
         fileUrl: string | null;
+        salaryStructureId: string | null;
         previousContractId: string | null;
         employeeId: string;
     })[]>;
@@ -626,6 +635,7 @@ export declare class HrController {
         workSchedule: import("@prisma/client").$Enums.WorkSchedule;
         scheduledPay: string | null;
         fileUrl: string | null;
+        salaryStructureId: string | null;
         previousContractId: string | null;
         employeeId: string;
     }>;
@@ -653,6 +663,7 @@ export declare class HrController {
         workSchedule: import("@prisma/client").$Enums.WorkSchedule;
         scheduledPay: string | null;
         fileUrl: string | null;
+        salaryStructureId: string | null;
         previousContractId: string | null;
         employeeId: string;
     }>;
@@ -945,17 +956,17 @@ export declare class HrController {
         updatedAt: Date;
         status: string;
         bonuses: number;
-        employeeId: string;
+        baseSalary: number;
         month: number;
         year: number;
-        baseSalary: number;
-        grossSalary: number;
+        employeeId: string;
         employeeContributions: import("@prisma/client/runtime/client").JsonValue | null;
+        employerContributions: import("@prisma/client/runtime/client").JsonValue | null;
+        grossSalary: number;
         totalEmployeeContributions: number;
         taxableSalary: number;
         incomeTax: number;
         netSalary: number;
-        employerContributions: import("@prisma/client/runtime/client").JsonValue | null;
         totalEmployerContributions: number;
     })[]>;
     getPayslips(month?: string, year?: string): Promise<({
@@ -1031,17 +1042,17 @@ export declare class HrController {
         updatedAt: Date;
         status: string;
         bonuses: number;
-        employeeId: string;
+        baseSalary: number;
         month: number;
         year: number;
-        baseSalary: number;
-        grossSalary: number;
+        employeeId: string;
         employeeContributions: import("@prisma/client/runtime/client").JsonValue | null;
+        employerContributions: import("@prisma/client/runtime/client").JsonValue | null;
+        grossSalary: number;
         totalEmployeeContributions: number;
         taxableSalary: number;
         incomeTax: number;
         netSalary: number;
-        employerContributions: import("@prisma/client/runtime/client").JsonValue | null;
         totalEmployerContributions: number;
     })[]>;
     deletePayslip(id: string): Promise<{
@@ -1050,17 +1061,17 @@ export declare class HrController {
         updatedAt: Date;
         status: string;
         bonuses: number;
-        employeeId: string;
+        baseSalary: number;
         month: number;
         year: number;
-        baseSalary: number;
-        grossSalary: number;
+        employeeId: string;
         employeeContributions: import("@prisma/client/runtime/client").JsonValue | null;
+        employerContributions: import("@prisma/client/runtime/client").JsonValue | null;
+        grossSalary: number;
         totalEmployeeContributions: number;
         taxableSalary: number;
         incomeTax: number;
         netSalary: number;
-        employerContributions: import("@prisma/client/runtime/client").JsonValue | null;
         totalEmployerContributions: number;
     }>;
     downloadPayslipPDF(id: string, res: Response): Promise<void>;

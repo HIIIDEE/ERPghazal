@@ -3,13 +3,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { PayrollCalculationService } from './services/payroll-calculation.service';
 import { PdfGenerationService } from './services/pdf-generation.service';
+import { RubriqueCalculationService } from './services/rubrique-calculation.service';
 
 @Injectable()
 export class HrService {
     constructor(
         private prisma: PrismaService,
         private payrollCalc: PayrollCalculationService,
-        private pdfGen: PdfGenerationService
+        private pdfGen: PdfGenerationService,
+        private rubriqueCalc: RubriqueCalculationService
     ) { }
 
     async createEmployee(data: CreateEmployeeDto) {
@@ -368,13 +370,15 @@ export class HrService {
         ]);
 
         // Process payslips for all employees
-        const payslipData = employees
-            .map(employee => this.preparePayslipData(employee, month, year, employeeContributions, employerContributions))
-            .filter(data => data !== null); // Remove employees without active contracts
+        const payslipData = await Promise.all(
+            employees.map(employee => this.preparePayslipData(employee, month, year, employeeContributions, employerContributions))
+        );
+
+        const validPayslipData = payslipData.filter(data => data !== null);
 
         // Batch upsert all payslips
         const payslips = await Promise.all(
-            payslipData.map(data =>
+            validPayslipData.map(data =>
                 this.prisma.payslip.upsert({
                     where: {
                         employeeId_month_year: {
@@ -383,13 +387,13 @@ export class HrService {
                             year
                         }
                     },
-                    update: data.payslipFields,
+                    update: data.payslipFields as any,
                     create: {
                         employeeId: data.employeeId,
                         month,
                         year,
                         ...data.payslipFields
-                    },
+                    } as any,
                     include: {
                         employee: {
                             include: {
@@ -406,44 +410,90 @@ export class HrService {
     }
 
     /**
-     * Prepare payslip data for a single employee
+     * Prepare payslip data for a single employee using Rubrique Engine
      */
-    private preparePayslipData(employee: any, month: number, year: number, employeeContributions: any[], employerContributions: any[]) {
+    private async preparePayslipData(employee: any, month: number, year: number, employeeContributions: any[], employerContributions: any[]) {
         // Get active contract
-        const activeContract = employee.contracts.find(c => !c.endDate || new Date(c.endDate) > new Date());
+        const activeContract = employee.contracts.find((c: any) => !c.endDate || new Date(c.endDate) > new Date());
         if (!activeContract) return null;
 
-        const baseSalary = activeContract.wage || 0;
+        const baseSalary = Number(activeContract.wage) || 0;
 
-        // Calculate bonuses using the service
-        const totalBonuses = this.payrollCalc.calculateBonuses({
-            bonuses: employee.bonuses,
-            baseSalary,
+        // Calculate rubriques using the new engine
+        const calculatedRubriques = await this.rubriqueCalc.calculateEmployeeRubriques({
+            employeeId: employee.id,
             month,
-            year
+            year,
+            baseSalary
         });
 
-        // Calculate complete payslip using the service
-        const calculation = this.payrollCalc.calculatePayslip(
-            baseSalary,
-            totalBonuses,
-            employeeContributions,
-            employerContributions
-        );
+        // Aggregate results for Payslip model
+        let grossSalary = 0;
+        let taxableSalary = 0; // Needs to be determined from rubriques or calculated
+        let totalEmployeeContributions = 0;
+        let totalEmployerContributions = 0;
+        let incomeTax = 0;
+        let bonuses = 0;
+        let netSalary = 0;
+
+        // Helper to extract details
+        const empContribDetails: any = {};
+        const emplerContribDetails: any = {};
+
+        // Calculate totals based on Rubrique Types
+        // GAIN -> adds to Gross
+        // RETENUE -> subtracts from Net (may include Contribution or Tax)
+        // COTISATION -> Employer costs (informative usually)
+
+        for (const r of calculatedRubriques) {
+            if (r.type === 'GAIN') {
+                grossSalary += r.montant;
+                // Assuming implicit mapping: if it's not base, it's a bonus/prime
+                bonuses += r.montant;
+            } else if (r.type === 'BASE') {
+                grossSalary += r.montant;
+            } else if (r.type === 'RETENUE') {
+                // Check if it's SS or IRG based on code or flags?
+                // For now, simple aggregation
+                if (r.code === 'SS' || r.code === 'CNAS') {
+                    totalEmployeeContributions += r.montant;
+                    empContribDetails[r.code] = { name: r.nom, amount: r.montant, rate: r.taux };
+                } else if (r.code === 'IRG') {
+                    incomeTax += r.montant;
+                } else {
+                    // Other retenues
+                }
+            } else if (r.type === 'COTISATION') {
+                totalEmployerContributions += r.montant;
+                emplerContribDetails[r.code] = { name: r.nom, amount: r.montant, rate: r.taux };
+            }
+        }
+
+        // If Rubriques engine didn't output specific tax/ss, we might be missing them if not configured.
+        // But for now we trust the engine outputs what's configured.
+        // We need 'TaxableSalary'. Usually Gross - SS.
+        taxableSalary = grossSalary - totalEmployeeContributions;
+
+        // Net = Gross - Retenues (SS + IRG + Others)
+        const totalRetenues = calculatedRubriques
+            .filter(r => r.type === 'RETENUE')
+            .reduce((sum, r) => sum + r.montant, 0);
+
+        netSalary = grossSalary - totalRetenues;
 
         return {
             employeeId: employee.id,
             payslipFields: {
-                baseSalary: calculation.baseSalary,
-                bonuses: calculation.bonuses,
-                grossSalary: calculation.grossSalary,
-                employeeContributions: calculation.employeeContributions,
-                totalEmployeeContributions: calculation.totalEmployeeContributions,
-                taxableSalary: calculation.taxableSalary,
-                incomeTax: calculation.incomeTax,
-                netSalary: calculation.netSalary,
-                employerContributions: calculation.employerContributions,
-                totalEmployerContributions: calculation.totalEmployerContributions,
+                baseSalary: baseSalary,
+                bonuses: bonuses,
+                grossSalary: grossSalary,
+                employeeContributions: empContribDetails,
+                totalEmployeeContributions: totalEmployeeContributions,
+                taxableSalary: taxableSalary,
+                incomeTax: incomeTax,
+                netSalary: netSalary,
+                employerContributions: emplerContribDetails,
+                totalEmployerContributions: totalEmployerContributions,
                 status: 'DRAFT'
             }
         };
