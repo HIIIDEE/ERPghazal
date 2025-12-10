@@ -7,13 +7,13 @@ export declare class PayrollConfigController {
     getAllParameters(): Promise<{
         id: string;
         code: string;
-        description: string | null;
+        nom: string;
+        valeur: import("@prisma/client-runtime-utils").Decimal;
         createdAt: Date;
         updatedAt: Date;
         startDate: Date;
         endDate: Date | null;
-        nom: string;
-        valeur: import("@prisma/client-runtime-utils").Decimal;
+        description: string | null;
     }[]>;
     getActiveParameters(date?: string): Promise<Record<string, number>>;
     getParameter(code: string, date?: string): Promise<{
@@ -30,53 +30,53 @@ export declare class PayrollConfigController {
     }): Promise<{
         id: string;
         code: string;
-        description: string | null;
+        nom: string;
+        valeur: import("@prisma/client-runtime-utils").Decimal;
         createdAt: Date;
         updatedAt: Date;
         startDate: Date;
         endDate: Date | null;
-        nom: string;
-        valeur: import("@prisma/client-runtime-utils").Decimal;
+        description: string | null;
     }>;
     deleteParameter(id: string): Promise<{
         id: string;
         code: string;
-        description: string | null;
+        nom: string;
+        valeur: import("@prisma/client-runtime-utils").Decimal;
         createdAt: Date;
         updatedAt: Date;
         startDate: Date;
         endDate: Date | null;
-        nom: string;
-        valeur: import("@prisma/client-runtime-utils").Decimal;
+        description: string | null;
     }>;
     initializeDefaultParameters(): Promise<{
         message: string;
     }>;
     getAllTaxBrackets(): Promise<{
         id: string;
-        rate: import("@prisma/client-runtime-utils").Decimal;
+        nom: string;
         createdAt: Date;
         updatedAt: Date;
         startDate: Date;
         endDate: Date | null;
-        nom: string;
+        ordre: number;
         minAmount: import("@prisma/client-runtime-utils").Decimal;
         maxAmount: import("@prisma/client-runtime-utils").Decimal | null;
+        rate: import("@prisma/client-runtime-utils").Decimal;
         fixedAmount: import("@prisma/client-runtime-utils").Decimal;
-        ordre: number;
     }[]>;
     getActiveTaxBrackets(date?: string): Promise<{
         id: string;
-        rate: import("@prisma/client-runtime-utils").Decimal;
+        nom: string;
         createdAt: Date;
         updatedAt: Date;
         startDate: Date;
         endDate: Date | null;
-        nom: string;
+        ordre: number;
         minAmount: import("@prisma/client-runtime-utils").Decimal;
         maxAmount: import("@prisma/client-runtime-utils").Decimal | null;
+        rate: import("@prisma/client-runtime-utils").Decimal;
         fixedAmount: import("@prisma/client-runtime-utils").Decimal;
-        ordre: number;
     }[]>;
     createTaxBracket(data: {
         nom: string;
@@ -89,16 +89,16 @@ export declare class PayrollConfigController {
         endDate?: string;
     }): Promise<{
         id: string;
-        rate: import("@prisma/client-runtime-utils").Decimal;
+        nom: string;
         createdAt: Date;
         updatedAt: Date;
         startDate: Date;
         endDate: Date | null;
-        nom: string;
+        ordre: number;
         minAmount: import("@prisma/client-runtime-utils").Decimal;
         maxAmount: import("@prisma/client-runtime-utils").Decimal | null;
+        rate: import("@prisma/client-runtime-utils").Decimal;
         fixedAmount: import("@prisma/client-runtime-utils").Decimal;
-        ordre: number;
     }>;
     updateTaxBracket(id: string, data: {
         nom?: string;
@@ -110,29 +110,29 @@ export declare class PayrollConfigController {
         endDate?: string;
     }): Promise<{
         id: string;
-        rate: import("@prisma/client-runtime-utils").Decimal;
+        nom: string;
         createdAt: Date;
         updatedAt: Date;
         startDate: Date;
         endDate: Date | null;
-        nom: string;
+        ordre: number;
         minAmount: import("@prisma/client-runtime-utils").Decimal;
         maxAmount: import("@prisma/client-runtime-utils").Decimal | null;
+        rate: import("@prisma/client-runtime-utils").Decimal;
         fixedAmount: import("@prisma/client-runtime-utils").Decimal;
-        ordre: number;
     }>;
     deleteTaxBracket(id: string): Promise<{
         id: string;
-        rate: import("@prisma/client-runtime-utils").Decimal;
+        nom: string;
         createdAt: Date;
         updatedAt: Date;
         startDate: Date;
         endDate: Date | null;
-        nom: string;
+        ordre: number;
         minAmount: import("@prisma/client-runtime-utils").Decimal;
         maxAmount: import("@prisma/client-runtime-utils").Decimal | null;
+        rate: import("@prisma/client-runtime-utils").Decimal;
         fixedAmount: import("@prisma/client-runtime-utils").Decimal;
-        ordre: number;
     }>;
     initializeDefaultTaxBrackets(): Promise<{
         message: string;
@@ -148,18 +148,18 @@ export declare class PayrollConfigController {
         rubrique: {
             id: number;
             code: string;
-            type: import("@prisma/client").$Enums.RubriqueType;
-            isActive: boolean;
-            createdAt: Date;
-            updatedAt: Date;
             nom: string;
-            valeur: import("@prisma/client-runtime-utils").Decimal | null;
+            type: import("@prisma/client").$Enums.RubriqueType;
             montantType: import("@prisma/client").$Enums.RubriqueMontantType;
+            valeur: import("@prisma/client-runtime-utils").Decimal | null;
             formule: string | null;
             soumisCnas: boolean;
             soumisIrg: boolean;
             soumisChargeEmployeur: boolean;
             ordreAffichage: number | null;
+            isActive: boolean;
+            createdAt: Date;
+            updatedAt: Date;
         };
     } & {
         id: string;

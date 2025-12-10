@@ -41,7 +41,7 @@ let PdfGenerationService = class PdfGenerationService {
     addHeader(doc, payslip) {
         doc.fontSize(20).text('BULLETIN DE PAIE', { align: 'center' });
         doc.moveDown();
-        doc.fontSize(12).text(`Période: ${this.MONTH_NAMES[payslip.month - 1]} ${payslip.year}`, { align: 'center' });
+        doc.fontSize(12).text(`Période: ${this.MONTH_NAMES[payslip.month]} ${payslip.year}`, { align: 'center' });
         doc.moveDown(2);
     }
     addEmployeeInfo(doc, payslip) {
@@ -62,7 +62,12 @@ let PdfGenerationService = class PdfGenerationService {
         doc.moveDown(0.5);
         doc.fontSize(10);
         this.addLine(doc, 'Salaire de base:', payslip.baseSalary);
-        if (payslip.bonuses > 0) {
+        if (payslip.details && payslip.details.gains && Array.isArray(payslip.details.gains)) {
+            payslip.details.gains.forEach((gain) => {
+                this.addLine(doc, `${gain.name}:`, gain.amount);
+            });
+        }
+        else if (payslip.bonuses > 0) {
             this.addLine(doc, 'Primes et indemnités:', payslip.bonuses);
         }
         doc.fontSize(11).font('Helvetica-Bold');

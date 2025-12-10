@@ -64,7 +64,8 @@ export interface Employee {
             percentage?: number;
         };
     }[];
-
+    // Rubriques
+    rubriques?: any[];
 }
 
 export interface Rubrique {
@@ -136,6 +137,7 @@ interface EmployeeState {
     generatePayslips: (employeeIds: string[], month: number, year: number) => Promise<void>;
     fetchPayslips: (month?: number, year?: number) => Promise<void>;
     deletePayslip: (id: string) => Promise<void>;
+    simulatePayslip: (employeeId: string, month: number, year: number) => Promise<any>;
     // Rubriques
     rubriques: Rubrique[];
     fetchRubriques: () => Promise<void>;
@@ -150,6 +152,12 @@ interface EmployeeState {
     deleteSalaryStructure: (id: string) => Promise<void>;
     addRubriqueToStructure: (structureId: string, rubriqueId: number, ordre: number) => Promise<void>;
     removeRubriqueFromStructure: (structureId: string, rubriqueId: number) => Promise<void>;
+
+    // Monthly Variables
+    monthlyVariablesEmployees: any[];
+    fetchMonthlyVariables: (month: number, year: number) => Promise<void>;
+    assignMonthlyVariable: (employeeId: string, rubriqueId: number, data: any) => Promise<void>;
+    deleteEmployeeRubrique: (employeeId: string, rubriqueId: number) => Promise<void>;
 }
 
 export const useEmployeeStore = create<EmployeeState>((set, get) => ({
@@ -160,6 +168,7 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
     payrollBonuses: [],
     rubriques: [],
     salaryStructures: [],
+    monthlyVariablesEmployees: [],
     loading: false,
     error: null,
     fetchEmployees: async () => {
@@ -347,7 +356,6 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
             throw error;
         }
     },
-
     // Absence Reasons
     absenceReasons: [],
     fetchAbsenceReasons: async () => {
@@ -374,7 +382,6 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
             throw error;
         }
     },
-
     // Payslips
     payslips: [],
     generatePayslips: async (employeeIds, month, year) => {
@@ -401,6 +408,15 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
             await api.delete(`/hr/payslips/${id}`);
             get().fetchPayslips();
         } catch (error) {
+            throw error;
+        }
+    },
+    simulatePayslip: async (employeeId, month, year) => {
+        try {
+            const res = await api.post('/hr/payslips/simulate', { employeeId, month, year });
+            return res.data;
+        } catch (error) {
+            console.error(error);
             throw error;
         }
     },
@@ -482,6 +498,34 @@ export const useEmployeeStore = create<EmployeeState>((set, get) => ({
         try {
             await api.delete(`/hr/salary-structures/${structureId}/rubriques/${rubriqueId}`);
             get().fetchSalaryStructures();
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    // Monthly Variables
+    fetchMonthlyVariables: async (month, year) => {
+        try {
+            const res = await api.get('/hr/variables', { params: { month, year } });
+            set({ monthlyVariablesEmployees: res.data });
+        } catch (error) {
+            console.error(error);
+        }
+    },
+    assignMonthlyVariable: async (employeeId, rubriqueId, data) => {
+        try {
+            await api.post(`/hr/employees/${employeeId}/rubriques`, {
+                rubriqueId,
+                ...data
+            });
+            // Don't refresh whole list immediately, let the component handle it or refresh
+        } catch (error) {
+            throw error;
+        }
+    },
+    deleteEmployeeRubrique: async (employeeId, rubriqueId) => {
+        try {
+            await api.delete(`/hr/employees/${employeeId}/rubriques/${rubriqueId}`);
         } catch (error) {
             throw error;
         }

@@ -23,6 +23,7 @@ interface PayslipData {
     netSalary: number;
     employerContributions: Record<string, any>;
     totalEmployerContributions: number;
+    details?: any;
 }
 export declare class PdfGenerationService {
     private readonly MONTH_NAMES;

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useEmployeeStore } from '../features/hr/employeeStore';
-import { Coins, ClipboardList, Calendar, List, Settings, TrendingUp, UserCheck } from 'lucide-react';
+import { Coins, ClipboardList, Calendar, List, Settings, TrendingUp, UserCheck, Calculator } from 'lucide-react';
 import { RubriquesConfiguration } from '../features/hr/RubriquesConfiguration';
 import { PayrollParametersConfig } from '../features/hr/PayrollParametersConfig';
 import { TaxBracketsConfig } from '../features/hr/TaxBracketsConfig';
 import { SalaryStructuresConfig } from '../features/hr/SalaryStructuresConfig';
 import { EmployeeRubriqueAssignment } from '../features/hr/EmployeeRubriqueAssignment';
 import { BulkRubriqueAssignment } from '../features/hr/BulkRubriqueAssignment';
+import MonthlyVariables from './MonthlyVariables'; // Import the new component
 
 export function Payroll() {
     const {
@@ -14,8 +15,8 @@ export function Payroll() {
         generatePayslips, fetchPayslips, payslips
     } = useEmployeeStore();
 
-    const [activeTab, setActiveTab] = useState<'rubriques' | 'structures' | 'parameters' | 'tax-brackets' | 'assignment' | 'payslips'>('rubriques');
-    const [assignmentMode, setAssignmentMode] = useState<'individual' | 'bulk'>('bulk');
+    const [activeTab, setActiveTab] = useState<'rubriques' | 'structures' | 'parameters' | 'tax-brackets' | 'assignment' | 'variables' | 'payslips'>('rubriques');
+    const [assignmentMode, setAssignmentMode] = useState<'individual' | 'bulk'>('individual');
 
     // Payslip Generation State
     const [payslipMonth, setPayslipMonth] = useState(new Date().getMonth());
@@ -74,7 +75,7 @@ export function Payroll() {
                 </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #e2e8f0', overflowX: 'auto' }}>
                 <button
                     onClick={() => setActiveTab('rubriques')}
                     style={{
@@ -83,7 +84,8 @@ export function Payroll() {
                         color: activeTab === 'rubriques' ? '#059669' : '#6b7280',
                         fontWeight: 600,
                         display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer'
+                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer',
+                        whiteSpace: 'nowrap'
                     }}
                 >
                     <List size={18} /> Rubriques
@@ -96,10 +98,25 @@ export function Payroll() {
                         color: activeTab === 'structures' ? '#059669' : '#6b7280',
                         fontWeight: 600,
                         display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer'
+                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer',
+                        whiteSpace: 'nowrap'
                     }}
                 >
                     <List size={18} /> Structures
+                </button>
+                <button
+                    onClick={() => setActiveTab('assignment')}
+                    style={{
+                        padding: '0.75rem 1rem',
+                        borderBottom: activeTab === 'assignment' ? '2px solid #059669' : '2px solid transparent',
+                        color: activeTab === 'assignment' ? '#059669' : '#6b7280',
+                        fontWeight: 600,
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                    }}
+                >
+                    <UserCheck size={18} /> Affectation Rubriques
                 </button>
                 <button
                     onClick={() => setActiveTab('parameters')}
@@ -109,7 +126,8 @@ export function Payroll() {
                         color: activeTab === 'parameters' ? '#059669' : '#6b7280',
                         fontWeight: 600,
                         display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer'
+                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer',
+                        whiteSpace: 'nowrap'
                     }}
                 >
                     <Settings size={18} /> Paramètres
@@ -122,23 +140,25 @@ export function Payroll() {
                         color: activeTab === 'tax-brackets' ? '#059669' : '#6b7280',
                         fontWeight: 600,
                         display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer'
+                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer',
+                        whiteSpace: 'nowrap'
                     }}
                 >
                     <TrendingUp size={18} /> Barème IRG
                 </button>
                 <button
-                    onClick={() => setActiveTab('assignment')}
+                    onClick={() => setActiveTab('variables')}
                     style={{
                         padding: '0.75rem 1rem',
-                        borderBottom: activeTab === 'assignment' ? '2px solid #059669' : '2px solid transparent',
-                        color: activeTab === 'assignment' ? '#059669' : '#6b7280',
+                        borderBottom: activeTab === 'variables' ? '2px solid #059669' : '2px solid transparent',
+                        color: activeTab === 'variables' ? '#059669' : '#6b7280',
                         fontWeight: 600,
                         display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer'
+                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer',
+                        whiteSpace: 'nowrap'
                     }}
                 >
-                    <UserCheck size={18} /> Attribution
+                    <Calculator size={18} /> Variables du Mois
                 </button>
                 <button
                     onClick={() => setActiveTab('payslips')}
@@ -148,7 +168,8 @@ export function Payroll() {
                         color: activeTab === 'payslips' ? '#059669' : '#6b7280',
                         fontWeight: 600,
                         display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer'
+                        background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none', cursor: 'pointer',
+                        whiteSpace: 'nowrap'
                     }}
                 >
                     <ClipboardList size={18} /> Bulletins de paie
@@ -165,37 +186,11 @@ export function Payroll() {
                 <SalaryStructuresConfig />
             )}
 
-            {/* TAB: PARAMETERS */}
-            {activeTab === 'parameters' && (
-                <PayrollParametersConfig />
-            )}
-
-            {/* TAB: TAX BRACKETS */}
-            {activeTab === 'tax-brackets' && (
-                <TaxBracketsConfig />
-            )}
-
-            {/* TAB: ASSIGNMENT */}
+            {/* TAB: ASSIGNMENT (AFFECTATION) */}
             {activeTab === 'assignment' && (
                 <div>
                     {/* Sub-tabs for assignment modes */}
                     <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', backgroundColor: 'white', padding: '0.5rem', borderRadius: '8px', width: 'fit-content' }}>
-                        <button
-                            onClick={() => setAssignmentMode('bulk')}
-                            style={{
-                                padding: '0.5rem 1rem',
-                                borderRadius: '6px',
-                                border: 'none',
-                                backgroundColor: assignmentMode === 'bulk' ? '#059669' : 'transparent',
-                                color: assignmentMode === 'bulk' ? 'white' : '#6b7280',
-                                fontWeight: 600,
-                                fontSize: '0.875rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            Attribution Groupée
-                        </button>
                         <button
                             onClick={() => setAssignmentMode('individual')}
                             style={{
@@ -212,6 +207,22 @@ export function Payroll() {
                         >
                             Par Employé
                         </button>
+                        <button
+                            onClick={() => setAssignmentMode('bulk')}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                borderRadius: '6px',
+                                border: 'none',
+                                backgroundColor: assignmentMode === 'bulk' ? '#059669' : 'transparent',
+                                color: assignmentMode === 'bulk' ? 'white' : '#6b7280',
+                                fontWeight: 600,
+                                fontSize: '0.875rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            Attribution Groupée
+                        </button>
                     </div>
 
                     {assignmentMode === 'bulk' ? (
@@ -220,6 +231,21 @@ export function Payroll() {
                         <EmployeeRubriqueAssignment />
                     )}
                 </div>
+            )}
+
+            {/* TAB: PARAMETERS */}
+            {activeTab === 'parameters' && (
+                <PayrollParametersConfig />
+            )}
+
+            {/* TAB: TAX BRACKETS */}
+            {activeTab === 'tax-brackets' && (
+                <TaxBracketsConfig />
+            )}
+
+            {/* TAB: VARIABLES DU MOIS */}
+            {activeTab === 'variables' && (
+                <MonthlyVariables />
             )}
 
             {/* TAB: PAYSLIP GENERATION */}
@@ -292,9 +318,13 @@ export function Payroll() {
                                     }
 
                                     alert(`${selectedForPayslip.size} bulletin(s) de paie généré(s) et téléchargé(s) avec succès pour ${new Date(0, payslipMonth).toLocaleString('fr-FR', { month: 'long' })} ${payslipYear}`);
-                                } catch (error) {
+                                } catch (error: any) {
                                     console.error('Erreur lors de la génération des bulletins:', error);
-                                    alert('Erreur lors de la génération des bulletins de paie');
+                                    let message = 'Erreur lors de la génération des bulletins de paie';
+                                    if (error?.response?.data?.message) {
+                                        message += ': ' + error.response.data.message;
+                                    }
+                                    alert(message);
                                 }
                             }}
                         >

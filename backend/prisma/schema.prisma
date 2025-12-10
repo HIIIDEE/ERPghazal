@@ -471,6 +471,8 @@ model Payslip {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  details         Json?    // Stores full breakdown of rubriques for the PDF
+
   @@unique([employeeId, month, year])
 }
 
@@ -565,3 +567,4 @@ model TaxBracket {
 
   @@index([startDate, ordre])
 }
+

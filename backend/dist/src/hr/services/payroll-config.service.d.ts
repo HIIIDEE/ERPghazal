@@ -15,13 +15,13 @@ export declare class PayrollConfigService {
     }): Promise<{
         id: string;
         code: string;
-        description: string | null;
+        nom: string;
+        valeur: Prisma.Decimal;
         createdAt: Date;
         updatedAt: Date;
         startDate: Date;
         endDate: Date | null;
-        nom: string;
-        valeur: Prisma.Decimal;
+        description: string | null;
     }>;
     calculateIRG(taxableSalary: number, date?: Date): Promise<number>;
     private calculateIRGFallback;

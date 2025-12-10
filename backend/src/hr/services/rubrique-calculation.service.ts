@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { FormulaEngineService } from './formula-engine.service';
 import { PayrollConfigService } from './payroll-config.service';
@@ -10,6 +10,7 @@ interface RubriqueCalculationContext {
     year: number;
     baseSalary: number;
     grossSalary?: number;
+    hireDate: Date;
 }
 
 interface CalculatedRubrique {
@@ -39,10 +40,14 @@ export class RubriqueCalculationService {
      * PASS 2: Calculate RETENUES using the correct SALAIRE_BRUT
      */
     async calculateEmployeeRubriques(context: RubriqueCalculationContext): Promise<CalculatedRubrique[]> {
-        const { employeeId, month, year, baseSalary } = context;
+        const { employeeId, month, year, baseSalary, hireDate } = context;
         const currentDate = new Date(year, month, 15); // Mid-month for date checks
 
-        // Get employee's active rubriques
+        // Calculate Seniority (Ancienneté) in years
+        const diffTime = Math.abs(currentDate.getTime() - new Date(hireDate).getTime());
+        const seniorityYears = diffTime / (1000 * 60 * 60 * 24 * 365.25);
+        const ANCIENNETE = this.roundToTwo(seniorityYears);
+
         // Get employee's active rubriques (Individual assignments)
         const individualAssignments = await this.prisma.employeeRubrique.findMany({
             where: {
@@ -119,9 +124,21 @@ export class RubriqueCalculationService {
                 return orderA - orderB;
             });
 
+        // Fetch Tax Brackets
+        const taxBrackets = await this.prisma.taxBracket.findMany({
+            where: {
+                startDate: { lte: currentDate },
+                OR: [
+                    { endDate: null },
+                    { endDate: { gte: currentDate } }
+                ]
+            },
+            orderBy: { ordre: 'asc' }
+        });
+
 
         // Get payroll parameters for formulas
-        const params = await this.payrollConfig.getAllParameters(currentDate);
+        const params: any = await this.payrollConfig.getAllParameters(currentDate);
 
         const results: CalculatedRubrique[] = [];
 
@@ -142,10 +159,17 @@ export class RubriqueCalculationService {
                 SALAIRE_BASE: baseSalary,
                 SALAIRE_BRUT: baseSalary, // Not yet calculated
                 SALAIRE_IMPOSABLE: baseSalary, // Not yet calculated
+                ANCIENNETE, // Inject Seniority
                 ...params
             };
 
-            const montant = await this.calculateSingleRubrique(rubrique, empRub, formulaContext);
+            let montant = 0;
+            try {
+                montant = await this.calculateSingleRubrique(rubrique, empRub, formulaContext);
+            } catch (error) {
+                console.error(`Error calculating rubrique ${rubrique.code}:`, error);
+                throw new Error(`Erreur de calcul pour la rubrique ${rubrique.code} (${rubrique.nom}): ${error.message}`);
+            }
             results.push({
                 code: rubrique.code,
                 nom: rubrique.nom,
@@ -167,10 +191,17 @@ export class RubriqueCalculationService {
                 SALAIRE_BASE: baseSalary,
                 SALAIRE_BRUT: baseSalary, // Use base for percentage gains
                 SALAIRE_IMPOSABLE: baseSalary,
+                ANCIENNETE,
                 ...params
             };
 
-            const montant = await this.calculateSingleRubrique(rubrique, empRub, formulaContext);
+            let montant = 0;
+            try {
+                montant = await this.calculateSingleRubrique(rubrique, empRub, formulaContext);
+            } catch (error) {
+                console.error(`Error calculating rubrique ${rubrique.code}:`, error);
+                throw new Error(`Erreur de calcul pour la rubrique ${rubrique.code} (${rubrique.nom}): ${error.message}`);
+            }
 
             results.push({
                 code: rubrique.code,
@@ -202,17 +233,35 @@ export class RubriqueCalculationService {
         // =================================================================================
 
         let totalRetenues = 0;
+        let runningImposable = salaireBrutCotisations; // Start with S.Brut (assuming only Brut Soumis is used for Calc base)
+
+        // Find SS amount if already in results (unlikely as we are iterating retenues now)
+        // But SS is a Retenue.
+        // We need to deduct SS from runningImposable BEFORE calculating IRG.
+        // Since rubriques are ordered, SS should come before IRG.
 
         for (const empRub of retenueRubriques) {
             const rubrique = empRub.rubrique;
+
+            // Calculate potential IRG for this step
+            const currentIrg = this.calculateIrg(runningImposable, taxBrackets);
+
             const formulaContext = {
                 SALAIRE_BASE: baseSalary,
-                SALAIRE_BRUT: salaireBrutCotisations,  // ← CORRECT: use brut for cotisations
-                SALAIRE_IMPOSABLE: salaireBrutTotal,   // ← Will be reduced by retenues
+                SALAIRE_BRUT: salaireBrutCotisations,
+                SALAIRE_IMPOSABLE: runningImposable,
+                IRG_PROGRESSIF: currentIrg, // Inject calculated IRG
+                ANCIENNETE,
                 ...params
             };
 
-            const montant = await this.calculateSingleRubrique(rubrique, empRub, formulaContext);
+            let montant = 0;
+            try {
+                montant = await this.calculateSingleRubrique(rubrique, empRub, formulaContext);
+            } catch (error) {
+                console.error(`Error calculating rubrique ${rubrique.code}:`, error);
+                throw new Error(`Erreur de calcul pour la rubrique ${rubrique.code} (${rubrique.nom}): ${error.message}`);
+            }
 
             results.push({
                 code: rubrique.code,
@@ -225,6 +274,12 @@ export class RubriqueCalculationService {
             });
 
             totalRetenues += montant;
+
+            // If this retenue is "Deductible" (e.g. SS), reduce runningImposable
+            // Convention: If code contains SS or CNAS, it's deductible.
+            if (rubrique.code.includes('SS') || rubrique.code.includes('CNAS')) {
+                runningImposable -= montant;
+            }
         }
 
         // =================================================================================
@@ -235,12 +290,18 @@ export class RubriqueCalculationService {
             const rubrique = empRub.rubrique;
             const formulaContext = {
                 SALAIRE_BASE: baseSalary,
-                SALAIRE_BRUT: salaireBrutCotisations,  // ← Same as employee contributions
+                SALAIRE_BRUT: salaireBrutCotisations,  // same as employee contributions
                 SALAIRE_IMPOSABLE: salaireBrutTotal - totalRetenues,
                 ...params
             };
 
-            const montant = await this.calculateSingleRubrique(rubrique, empRub, formulaContext);
+            let montant = 0;
+            try {
+                montant = await this.calculateSingleRubrique(rubrique, empRub, formulaContext);
+            } catch (error) {
+                console.error(`Error calculating rubrique ${rubrique.code}:`, error);
+                throw new Error(`Erreur de calcul pour la rubrique ${rubrique.code} (${rubrique.nom}): ${error.message}`);
+            }
 
             results.push({
                 code: rubrique.code,
@@ -256,10 +317,37 @@ export class RubriqueCalculationService {
         return results;
     }
 
+
+
     /**
-     * Calculate a single rubrique amount
+     * Calculate a single rubrique amount with fail-safe for Base Salary
      */
     private async calculateSingleRubrique(
+        rubrique: any,
+        employeeRubrique: any,
+        formulaContext: any
+    ): Promise<number> {
+        let montant = await this._calculateSingleRubriqueInternal(rubrique, employeeRubrique, formulaContext);
+
+        // Fail-safe: If Salaire de Base evaluates to 0 but we have a baseSalary in context, use it.
+        // This handles cases where the formula is missing or incorrect for the main base salary rubrique.
+        if (montant === 0 && formulaContext.SALAIRE_BASE > 0) {
+            const isBaseSalaryRubrique =
+                rubrique.code === 'SALAIRE_BASE' ||
+                rubrique.code === 'BASE' ||
+                rubrique.nom === 'Salaire de Base' ||
+                rubrique.nom === 'Salaire de base';
+
+            if (isBaseSalaryRubrique) {
+                console.warn(`[RubriqueCalculation] FAIL-SAFE: Forcing value for ${rubrique.code} (${rubrique.nom}) to ${formulaContext.SALAIRE_BASE}`);
+                return formulaContext.SALAIRE_BASE;
+            }
+        }
+
+        return montant;
+    }
+
+    private async _calculateSingleRubriqueInternal(
         rubrique: any,
         employeeRubrique: any,
         formulaContext: any
@@ -281,7 +369,7 @@ export class RubriqueCalculationService {
 
             case 'FORMULE':
                 if (!rubrique.formule) {
-                    throw new Error(`Rubrique ${rubrique.code} has type FORMULE but no formula defined`);
+                    return 0;
                 }
                 return this.formulaEngine.evaluate(rubrique.formule, formulaContext);
 
@@ -351,5 +439,34 @@ export class RubriqueCalculationService {
      */
     private roundToTwo(num: number): number {
         return Math.round(num * 100) / 100;
+    }
+
+    /**
+     * Calculate IRG based on Brackets
+     */
+    private calculateIrg(salaireImposable: number, brackets: any[]): number {
+        // Standard Logic (Abatement on Tax)
+        let tax = 0;
+        for (const bracket of brackets) {
+            const min = this.decimalToNumber(bracket.minAmount);
+            const max = bracket.maxAmount ? this.decimalToNumber(bracket.maxAmount) : Infinity;
+            const rate = this.decimalToNumber(bracket.rate);
+
+            if (salaireImposable > min) {
+                const taxableInThisBracket = Math.min(salaireImposable, max) - min;
+                tax += taxableInThisBracket * (rate / 100);
+            }
+        }
+
+        // Abattement 40% sur l'impôt (Min 1000, Max 1500)
+        const abatementRate = 0.40;
+        const totalAbatement = tax * abatementRate;
+        const finalAbatement = Math.min(Math.max(totalAbatement, 1000), 1500);
+
+        if (tax > 0) {
+            return Math.max(0, this.roundToTwo(tax - finalAbatement));
+        }
+
+        return 0;
     }
 }

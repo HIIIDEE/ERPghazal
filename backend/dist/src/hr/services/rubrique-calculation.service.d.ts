@@ -8,6 +8,7 @@ interface RubriqueCalculationContext {
     year: number;
     baseSalary: number;
     grossSalary?: number;
+    hireDate: Date;
 }
 interface CalculatedRubrique {
     code: string;
@@ -27,6 +28,7 @@ export declare class RubriqueCalculationService {
     constructor(prisma: PrismaService, formulaEngine: FormulaEngineService, payrollConfig: PayrollConfigService);
     calculateEmployeeRubriques(context: RubriqueCalculationContext): Promise<CalculatedRubrique[]>;
     private calculateSingleRubrique;
+    private _calculateSingleRubriqueInternal;
     assignRubriqueToEmployee(data: {
         employeeId: string;
         rubriqueId: number;
@@ -50,18 +52,18 @@ export declare class RubriqueCalculationService {
         rubrique: {
             id: number;
             code: string;
-            type: import("@prisma/client").$Enums.RubriqueType;
-            isActive: boolean;
-            createdAt: Date;
-            updatedAt: Date;
             nom: string;
-            valeur: Prisma.Decimal | null;
+            type: import("@prisma/client").$Enums.RubriqueType;
             montantType: import("@prisma/client").$Enums.RubriqueMontantType;
+            valeur: Prisma.Decimal | null;
             formule: string | null;
             soumisCnas: boolean;
             soumisIrg: boolean;
             soumisChargeEmployeur: boolean;
             ordreAffichage: number | null;
+            isActive: boolean;
+            createdAt: Date;
+            updatedAt: Date;
         };
     } & {
         id: string;
@@ -76,5 +78,6 @@ export declare class RubriqueCalculationService {
     })[]>;
     private decimalToNumber;
     private roundToTwo;
+    private calculateIrg;
 }
 export {};

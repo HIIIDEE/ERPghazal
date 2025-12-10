@@ -9,6 +9,9 @@ export declare class HrService {
     private pdfGen;
     private rubriqueCalc;
     constructor(prisma: PrismaService, payrollCalc: PayrollCalculationService, pdfGen: PdfGenerationService, rubriqueCalc: RubriqueCalculationService);
+    private mapMaritalStatus;
+    private mapGender;
+    private mapPaymentMethod;
     createEmployee(data: CreateEmployeeDto): Promise<{
         id: string;
         createdAt: Date;
@@ -19,6 +22,9 @@ export declare class HrService {
         workEmail: string;
         workPhone: string | null;
         workMobile: string | null;
+        departmentId: string | null;
+        managerId: string | null;
+        coachId: string | null;
         workAddress: string | null;
         workLocation: string | null;
         workingHours: string | null;
@@ -41,6 +47,7 @@ export declare class HrService {
         paymentMethod: import("@prisma/client").$Enums.PaymentMethod | null;
         status: import("@prisma/client").$Enums.EmployeeStatus;
         employeeType: import("@prisma/client").$Enums.EmployeeType;
+        userId: string | null;
         pin: string | null;
         badgeId: string | null;
         socialSecurityNumber: string | null;
@@ -55,12 +62,8 @@ export declare class HrService {
         cnasRateCacobath: string | null;
         cnasRateService: string | null;
         cnasMutual: string | null;
-        hireDate: Date;
-        departmentId: string | null;
-        managerId: string | null;
-        coachId: string | null;
         positionId: string | null;
-        userId: string | null;
+        hireDate: Date;
     }>;
     updateEmployee(id: string, data: any): Promise<{
         id: string;
@@ -72,6 +75,9 @@ export declare class HrService {
         workEmail: string;
         workPhone: string | null;
         workMobile: string | null;
+        departmentId: string | null;
+        managerId: string | null;
+        coachId: string | null;
         workAddress: string | null;
         workLocation: string | null;
         workingHours: string | null;
@@ -94,6 +100,7 @@ export declare class HrService {
         paymentMethod: import("@prisma/client").$Enums.PaymentMethod | null;
         status: import("@prisma/client").$Enums.EmployeeStatus;
         employeeType: import("@prisma/client").$Enums.EmployeeType;
+        userId: string | null;
         pin: string | null;
         badgeId: string | null;
         socialSecurityNumber: string | null;
@@ -108,12 +115,8 @@ export declare class HrService {
         cnasRateCacobath: string | null;
         cnasRateService: string | null;
         cnasMutual: string | null;
-        hireDate: Date;
-        departmentId: string | null;
-        managerId: string | null;
-        coachId: string | null;
         positionId: string | null;
-        userId: string | null;
+        hireDate: Date;
     }>;
     createContract(data: any): Promise<{
         id: string;
@@ -138,10 +141,10 @@ export declare class HrService {
         workingSchedule: string | null;
         workSchedule: import("@prisma/client").$Enums.WorkSchedule;
         scheduledPay: string | null;
-        fileUrl: string | null;
+        employeeId: string;
         salaryStructureId: string | null;
         previousContractId: string | null;
-        employeeId: string;
+        fileUrl: string | null;
     }>;
     updateContract(id: string, data: any): Promise<{
         id: string;
@@ -166,10 +169,10 @@ export declare class HrService {
         workingSchedule: string | null;
         workSchedule: import("@prisma/client").$Enums.WorkSchedule;
         scheduledPay: string | null;
-        fileUrl: string | null;
+        employeeId: string;
         salaryStructureId: string | null;
         previousContractId: string | null;
-        employeeId: string;
+        fileUrl: string | null;
     }>;
     findAllContracts(): Promise<({
         employee: {
@@ -182,6 +185,9 @@ export declare class HrService {
             workEmail: string;
             workPhone: string | null;
             workMobile: string | null;
+            departmentId: string | null;
+            managerId: string | null;
+            coachId: string | null;
             workAddress: string | null;
             workLocation: string | null;
             workingHours: string | null;
@@ -204,6 +210,7 @@ export declare class HrService {
             paymentMethod: import("@prisma/client").$Enums.PaymentMethod | null;
             status: import("@prisma/client").$Enums.EmployeeStatus;
             employeeType: import("@prisma/client").$Enums.EmployeeType;
+            userId: string | null;
             pin: string | null;
             badgeId: string | null;
             socialSecurityNumber: string | null;
@@ -218,12 +225,8 @@ export declare class HrService {
             cnasRateCacobath: string | null;
             cnasRateService: string | null;
             cnasMutual: string | null;
-            hireDate: Date;
-            departmentId: string | null;
-            managerId: string | null;
-            coachId: string | null;
             positionId: string | null;
-            userId: string | null;
+            hireDate: Date;
         };
         previousContract: {
             id: string;
@@ -248,10 +251,10 @@ export declare class HrService {
             workingSchedule: string | null;
             workSchedule: import("@prisma/client").$Enums.WorkSchedule;
             scheduledPay: string | null;
-            fileUrl: string | null;
+            employeeId: string;
             salaryStructureId: string | null;
             previousContractId: string | null;
-            employeeId: string;
+            fileUrl: string | null;
         } | null;
         nextContract: {
             id: string;
@@ -276,10 +279,10 @@ export declare class HrService {
             workingSchedule: string | null;
             workSchedule: import("@prisma/client").$Enums.WorkSchedule;
             scheduledPay: string | null;
-            fileUrl: string | null;
+            employeeId: string;
             salaryStructureId: string | null;
             previousContractId: string | null;
-            employeeId: string;
+            fileUrl: string | null;
         } | null;
     } & {
         id: string;
@@ -304,11 +307,24 @@ export declare class HrService {
         workingSchedule: string | null;
         workSchedule: import("@prisma/client").$Enums.WorkSchedule;
         scheduledPay: string | null;
-        fileUrl: string | null;
+        employeeId: string;
         salaryStructureId: string | null;
         previousContractId: string | null;
-        employeeId: string;
+        fileUrl: string | null;
     })[]>;
+    findAllTaxBrackets(): Promise<{
+        id: string;
+        nom: string;
+        createdAt: Date;
+        updatedAt: Date;
+        startDate: Date;
+        endDate: Date | null;
+        ordre: number;
+        minAmount: import("@prisma/client-runtime-utils").Decimal;
+        maxAmount: import("@prisma/client-runtime-utils").Decimal | null;
+        rate: import("@prisma/client-runtime-utils").Decimal;
+        fixedAmount: import("@prisma/client-runtime-utils").Decimal;
+    }[]>;
     createPosition(title: string): Promise<{
         id: string;
         createdAt: Date;
@@ -331,6 +347,9 @@ export declare class HrService {
         workEmail: string;
         workPhone: string | null;
         workMobile: string | null;
+        departmentId: string | null;
+        managerId: string | null;
+        coachId: string | null;
         workAddress: string | null;
         workLocation: string | null;
         workingHours: string | null;
@@ -353,6 +372,7 @@ export declare class HrService {
         paymentMethod: import("@prisma/client").$Enums.PaymentMethod | null;
         status: import("@prisma/client").$Enums.EmployeeStatus;
         employeeType: import("@prisma/client").$Enums.EmployeeType;
+        userId: string | null;
         pin: string | null;
         badgeId: string | null;
         socialSecurityNumber: string | null;
@@ -367,12 +387,8 @@ export declare class HrService {
         cnasRateCacobath: string | null;
         cnasRateService: string | null;
         cnasMutual: string | null;
-        hireDate: Date;
-        departmentId: string | null;
-        managerId: string | null;
-        coachId: string | null;
         positionId: string | null;
-        userId: string | null;
+        hireDate: Date;
     }>;
     getPositionHistory(employeeId: string): Promise<({
         position: {
@@ -393,9 +409,9 @@ export declare class HrService {
     findAllEmployees(): Promise<({
         department: {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
         } | null;
         position: {
             id: string;
@@ -427,10 +443,10 @@ export declare class HrService {
                 workingSchedule: string | null;
                 workSchedule: import("@prisma/client").$Enums.WorkSchedule;
                 scheduledPay: string | null;
-                fileUrl: string | null;
+                employeeId: string;
                 salaryStructureId: string | null;
                 previousContractId: string | null;
-                employeeId: string;
+                fileUrl: string | null;
             } | null;
             nextContract: {
                 id: string;
@@ -455,10 +471,10 @@ export declare class HrService {
                 workingSchedule: string | null;
                 workSchedule: import("@prisma/client").$Enums.WorkSchedule;
                 scheduledPay: string | null;
-                fileUrl: string | null;
+                employeeId: string;
                 salaryStructureId: string | null;
                 previousContractId: string | null;
-                employeeId: string;
+                fileUrl: string | null;
             } | null;
         } & {
             id: string;
@@ -483,20 +499,20 @@ export declare class HrService {
             workingSchedule: string | null;
             workSchedule: import("@prisma/client").$Enums.WorkSchedule;
             scheduledPay: string | null;
-            fileUrl: string | null;
+            employeeId: string;
             salaryStructureId: string | null;
             previousContractId: string | null;
-            employeeId: string;
+            fileUrl: string | null;
         })[];
         bonuses: ({
             bonus: {
                 id: string;
-                name: string;
-                description: string | null;
                 createdAt: Date;
                 updatedAt: Date;
-                calculationMode: import("@prisma/client").$Enums.BonusCalculationMode;
+                name: string;
+                description: string | null;
                 amount: number | null;
+                calculationMode: import("@prisma/client").$Enums.BonusCalculationMode;
                 percentage: number | null;
             };
         } & {
@@ -506,9 +522,9 @@ export declare class HrService {
             startDate: Date;
             endDate: Date | null;
             employeeId: string;
-            amount: number | null;
             frequency: import("@prisma/client").$Enums.BonusFrequency;
             bonusId: string;
+            amount: number | null;
         })[];
     } & {
         id: string;
@@ -520,6 +536,9 @@ export declare class HrService {
         workEmail: string;
         workPhone: string | null;
         workMobile: string | null;
+        departmentId: string | null;
+        managerId: string | null;
+        coachId: string | null;
         workAddress: string | null;
         workLocation: string | null;
         workingHours: string | null;
@@ -542,6 +561,7 @@ export declare class HrService {
         paymentMethod: import("@prisma/client").$Enums.PaymentMethod | null;
         status: import("@prisma/client").$Enums.EmployeeStatus;
         employeeType: import("@prisma/client").$Enums.EmployeeType;
+        userId: string | null;
         pin: string | null;
         badgeId: string | null;
         socialSecurityNumber: string | null;
@@ -556,25 +576,21 @@ export declare class HrService {
         cnasRateCacobath: string | null;
         cnasRateService: string | null;
         cnasMutual: string | null;
-        hireDate: Date;
-        departmentId: string | null;
-        managerId: string | null;
-        coachId: string | null;
         positionId: string | null;
-        userId: string | null;
+        hireDate: Date;
     })[]>;
     findAllDepartments(): Promise<{
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
     }[]>;
     findOneEmployee(id: string): Promise<({
         department: {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
         } | null;
         position: {
             id: string;
@@ -599,6 +615,40 @@ export declare class HrService {
             employeeId: string;
         })[];
         contracts: ({
+            salaryStructure: ({
+                rubriques: ({
+                    rubrique: {
+                        id: number;
+                        code: string;
+                        nom: string;
+                        type: import("@prisma/client").$Enums.RubriqueType;
+                        montantType: import("@prisma/client").$Enums.RubriqueMontantType;
+                        valeur: import("@prisma/client-runtime-utils").Decimal | null;
+                        formule: string | null;
+                        soumisCnas: boolean;
+                        soumisIrg: boolean;
+                        soumisChargeEmployeur: boolean;
+                        ordreAffichage: number | null;
+                        isActive: boolean;
+                        createdAt: Date;
+                        updatedAt: Date;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    salaryStructureId: string;
+                    rubriqueId: number;
+                    ordre: number;
+                })[];
+            } & {
+                id: string;
+                isActive: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                name: string;
+                description: string | null;
+            }) | null;
             previousContract: {
                 id: string;
                 type: import("@prisma/client").$Enums.ContractType;
@@ -622,10 +672,10 @@ export declare class HrService {
                 workingSchedule: string | null;
                 workSchedule: import("@prisma/client").$Enums.WorkSchedule;
                 scheduledPay: string | null;
-                fileUrl: string | null;
+                employeeId: string;
                 salaryStructureId: string | null;
                 previousContractId: string | null;
-                employeeId: string;
+                fileUrl: string | null;
             } | null;
             nextContract: {
                 id: string;
@@ -650,10 +700,10 @@ export declare class HrService {
                 workingSchedule: string | null;
                 workSchedule: import("@prisma/client").$Enums.WorkSchedule;
                 scheduledPay: string | null;
-                fileUrl: string | null;
+                employeeId: string;
                 salaryStructureId: string | null;
                 previousContractId: string | null;
-                employeeId: string;
+                fileUrl: string | null;
             } | null;
         } & {
             id: string;
@@ -678,20 +728,20 @@ export declare class HrService {
             workingSchedule: string | null;
             workSchedule: import("@prisma/client").$Enums.WorkSchedule;
             scheduledPay: string | null;
-            fileUrl: string | null;
+            employeeId: string;
             salaryStructureId: string | null;
             previousContractId: string | null;
-            employeeId: string;
+            fileUrl: string | null;
         })[];
         bonuses: ({
             bonus: {
                 id: string;
-                name: string;
-                description: string | null;
                 createdAt: Date;
                 updatedAt: Date;
-                calculationMode: import("@prisma/client").$Enums.BonusCalculationMode;
+                name: string;
+                description: string | null;
                 amount: number | null;
+                calculationMode: import("@prisma/client").$Enums.BonusCalculationMode;
                 percentage: number | null;
             };
         } & {
@@ -701,9 +751,37 @@ export declare class HrService {
             startDate: Date;
             endDate: Date | null;
             employeeId: string;
-            amount: number | null;
             frequency: import("@prisma/client").$Enums.BonusFrequency;
             bonusId: string;
+            amount: number | null;
+        })[];
+        rubriques: ({
+            rubrique: {
+                id: number;
+                code: string;
+                nom: string;
+                type: import("@prisma/client").$Enums.RubriqueType;
+                montantType: import("@prisma/client").$Enums.RubriqueMontantType;
+                valeur: import("@prisma/client-runtime-utils").Decimal | null;
+                formule: string | null;
+                soumisCnas: boolean;
+                soumisIrg: boolean;
+                soumisChargeEmployeur: boolean;
+                ordreAffichage: number | null;
+                isActive: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            startDate: Date;
+            endDate: Date | null;
+            employeeId: string;
+            rubriqueId: number;
+            montantOverride: import("@prisma/client-runtime-utils").Decimal | null;
+            tauxOverride: import("@prisma/client-runtime-utils").Decimal | null;
         })[];
     } & {
         id: string;
@@ -715,6 +793,9 @@ export declare class HrService {
         workEmail: string;
         workPhone: string | null;
         workMobile: string | null;
+        departmentId: string | null;
+        managerId: string | null;
+        coachId: string | null;
         workAddress: string | null;
         workLocation: string | null;
         workingHours: string | null;
@@ -737,6 +818,7 @@ export declare class HrService {
         paymentMethod: import("@prisma/client").$Enums.PaymentMethod | null;
         status: import("@prisma/client").$Enums.EmployeeStatus;
         employeeType: import("@prisma/client").$Enums.EmployeeType;
+        userId: string | null;
         pin: string | null;
         badgeId: string | null;
         socialSecurityNumber: string | null;
@@ -751,41 +833,37 @@ export declare class HrService {
         cnasRateCacobath: string | null;
         cnasRateService: string | null;
         cnasMutual: string | null;
-        hireDate: Date;
-        departmentId: string | null;
-        managerId: string | null;
-        coachId: string | null;
         positionId: string | null;
-        userId: string | null;
+        hireDate: Date;
     }) | null>;
     createPayrollBonus(data: any): Promise<{
         id: string;
-        name: string;
-        description: string | null;
         createdAt: Date;
         updatedAt: Date;
-        calculationMode: import("@prisma/client").$Enums.BonusCalculationMode;
+        name: string;
+        description: string | null;
         amount: number | null;
+        calculationMode: import("@prisma/client").$Enums.BonusCalculationMode;
         percentage: number | null;
     }>;
     findAllPayrollBonuses(): Promise<{
         id: string;
-        name: string;
-        description: string | null;
         createdAt: Date;
         updatedAt: Date;
-        calculationMode: import("@prisma/client").$Enums.BonusCalculationMode;
+        name: string;
+        description: string | null;
         amount: number | null;
+        calculationMode: import("@prisma/client").$Enums.BonusCalculationMode;
         percentage: number | null;
     }[]>;
     deletePayrollBonus(id: string): Promise<{
         id: string;
-        name: string;
-        description: string | null;
         createdAt: Date;
         updatedAt: Date;
-        calculationMode: import("@prisma/client").$Enums.BonusCalculationMode;
+        name: string;
+        description: string | null;
         amount: number | null;
+        calculationMode: import("@prisma/client").$Enums.BonusCalculationMode;
         percentage: number | null;
     }>;
     assignBonusToEmployee(employeeId: string, bonusId: string, details?: {
@@ -800,20 +878,20 @@ export declare class HrService {
         startDate: Date;
         endDate: Date | null;
         employeeId: string;
-        amount: number | null;
         frequency: import("@prisma/client").$Enums.BonusFrequency;
         bonusId: string;
+        amount: number | null;
     }>;
     removeBonusFromEmployee(employeeId: string, bonusId: string): Promise<import("@prisma/client").Prisma.BatchPayload>;
     getEmployeeBonuses(employeeId: string): Promise<({
         bonus: {
             id: string;
-            name: string;
-            description: string | null;
             createdAt: Date;
             updatedAt: Date;
-            calculationMode: import("@prisma/client").$Enums.BonusCalculationMode;
+            name: string;
+            description: string | null;
             amount: number | null;
+            calculationMode: import("@prisma/client").$Enums.BonusCalculationMode;
             percentage: number | null;
         };
     } & {
@@ -823,9 +901,9 @@ export declare class HrService {
         startDate: Date;
         endDate: Date | null;
         employeeId: string;
-        amount: number | null;
         frequency: import("@prisma/client").$Enums.BonusFrequency;
         bonusId: string;
+        amount: number | null;
     })[]>;
     createAbsence(data: any): Promise<{
         id: string;
@@ -843,9 +921,9 @@ export declare class HrService {
     getAbsences(employeeId: string): Promise<({
         reasonRel: {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            name: string;
             isAuthorized: boolean;
         } | null;
     } & {
@@ -876,32 +954,189 @@ export declare class HrService {
     }>;
     createAbsenceReason(data: any): Promise<{
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         isAuthorized: boolean;
     }>;
     getAbsenceReasons(): Promise<{
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         isAuthorized: boolean;
     }[]>;
     deleteAbsenceReason(id: string): Promise<{
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        name: string;
         isAuthorized: boolean;
     }>;
+    getEmployeesWithVariables(month: number, year: number): Promise<({
+        department: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            name: string;
+        } | null;
+        position: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            title: string;
+        } | null;
+        contracts: ({
+            salaryStructure: ({
+                rubriques: ({
+                    rubrique: {
+                        id: number;
+                        code: string;
+                        nom: string;
+                        type: import("@prisma/client").$Enums.RubriqueType;
+                        montantType: import("@prisma/client").$Enums.RubriqueMontantType;
+                        valeur: import("@prisma/client-runtime-utils").Decimal | null;
+                        formule: string | null;
+                        soumisCnas: boolean;
+                        soumisIrg: boolean;
+                        soumisChargeEmployeur: boolean;
+                        ordreAffichage: number | null;
+                        isActive: boolean;
+                        createdAt: Date;
+                        updatedAt: Date;
+                    };
+                } & {
+                    id: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    salaryStructureId: string;
+                    rubriqueId: number;
+                    ordre: number;
+                })[];
+            } & {
+                id: string;
+                isActive: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+                name: string;
+                description: string | null;
+            }) | null;
+        } & {
+            id: string;
+            type: import("@prisma/client").$Enums.ContractType;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import("@prisma/client").$Enums.ContractStatus;
+            reference: string | null;
+            startDate: Date;
+            endDate: Date | null;
+            wage: number;
+            hourlyWage: number | null;
+            weeklyHours: number | null;
+            classification: string | null;
+            coefficient: string | null;
+            benefits: import("@prisma/client/runtime/client").JsonValue | null;
+            cnasScheme: import("@prisma/client").$Enums.CnasScheme | null;
+            fiscalScheme: import("@prisma/client").$Enums.FiscalScheme | null;
+            executiveStatus: import("@prisma/client").$Enums.ExecutiveStatus | null;
+            trialPeriodDuration: number | null;
+            trialPeriodEndDate: Date | null;
+            workingSchedule: string | null;
+            workSchedule: import("@prisma/client").$Enums.WorkSchedule;
+            scheduledPay: string | null;
+            employeeId: string;
+            salaryStructureId: string | null;
+            previousContractId: string | null;
+            fileUrl: string | null;
+        })[];
+        rubriques: ({
+            rubrique: {
+                id: number;
+                code: string;
+                nom: string;
+                type: import("@prisma/client").$Enums.RubriqueType;
+                montantType: import("@prisma/client").$Enums.RubriqueMontantType;
+                valeur: import("@prisma/client-runtime-utils").Decimal | null;
+                formule: string | null;
+                soumisCnas: boolean;
+                soumisIrg: boolean;
+                soumisChargeEmployeur: boolean;
+                ordreAffichage: number | null;
+                isActive: boolean;
+                createdAt: Date;
+                updatedAt: Date;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            startDate: Date;
+            endDate: Date | null;
+            employeeId: string;
+            rubriqueId: number;
+            montantOverride: import("@prisma/client-runtime-utils").Decimal | null;
+            tauxOverride: import("@prisma/client-runtime-utils").Decimal | null;
+        })[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        firstName: string;
+        lastName: string;
+        jobTitle: string | null;
+        workEmail: string;
+        workPhone: string | null;
+        workMobile: string | null;
+        departmentId: string | null;
+        managerId: string | null;
+        coachId: string | null;
+        workAddress: string | null;
+        workLocation: string | null;
+        workingHours: string | null;
+        timezone: string | null;
+        privateEmail: string | null;
+        phone: string | null;
+        address: string | null;
+        nationality: string | null;
+        identificationId: string | null;
+        passportId: string | null;
+        gender: import("@prisma/client").$Enums.Gender | null;
+        birthday: Date | null;
+        placeOfBirth: string | null;
+        countryOfBirth: string | null;
+        maritalStatus: import("@prisma/client").$Enums.MaritalStatus | null;
+        children: number | null;
+        emergencyContact: string | null;
+        emergencyPhone: string | null;
+        bankAccount: string | null;
+        paymentMethod: import("@prisma/client").$Enums.PaymentMethod | null;
+        status: import("@prisma/client").$Enums.EmployeeStatus;
+        employeeType: import("@prisma/client").$Enums.EmployeeType;
+        userId: string | null;
+        pin: string | null;
+        badgeId: string | null;
+        socialSecurityNumber: string | null;
+        cnasAgency: string | null;
+        cnasStartDate: Date | null;
+        isHandicapped: boolean;
+        cnasContribution: boolean;
+        cnasRateSalary: string | null;
+        cnasRatePatron: string | null;
+        cnasRateSocial: string | null;
+        cnasRateHousing: string | null;
+        cnasRateCacobath: string | null;
+        cnasRateService: string | null;
+        cnasMutual: string | null;
+        positionId: string | null;
+        hireDate: Date;
+    })[]>;
     generatePayslips(employeeIds: string[], month: number, year: number): Promise<({
         employee: {
             department: {
                 id: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                name: string;
             } | null;
             position: {
                 id: string;
@@ -919,6 +1154,9 @@ export declare class HrService {
             workEmail: string;
             workPhone: string | null;
             workMobile: string | null;
+            departmentId: string | null;
+            managerId: string | null;
+            coachId: string | null;
             workAddress: string | null;
             workLocation: string | null;
             workingHours: string | null;
@@ -941,6 +1179,7 @@ export declare class HrService {
             paymentMethod: import("@prisma/client").$Enums.PaymentMethod | null;
             status: import("@prisma/client").$Enums.EmployeeStatus;
             employeeType: import("@prisma/client").$Enums.EmployeeType;
+            userId: string | null;
             pin: string | null;
             badgeId: string | null;
             socialSecurityNumber: string | null;
@@ -955,12 +1194,8 @@ export declare class HrService {
             cnasRateCacobath: string | null;
             cnasRateService: string | null;
             cnasMutual: string | null;
-            hireDate: Date;
-            departmentId: string | null;
-            managerId: string | null;
-            coachId: string | null;
             positionId: string | null;
-            userId: string | null;
+            hireDate: Date;
         };
     } & {
         id: string;
@@ -968,27 +1203,128 @@ export declare class HrService {
         updatedAt: Date;
         status: string;
         bonuses: number;
-        baseSalary: number;
+        employeeId: string;
         month: number;
         year: number;
-        employeeId: string;
-        employeeContributions: import("@prisma/client/runtime/client").JsonValue | null;
-        employerContributions: import("@prisma/client/runtime/client").JsonValue | null;
+        baseSalary: number;
         grossSalary: number;
+        employeeContributions: import("@prisma/client/runtime/client").JsonValue | null;
         totalEmployeeContributions: number;
         taxableSalary: number;
         incomeTax: number;
         netSalary: number;
+        employerContributions: import("@prisma/client/runtime/client").JsonValue | null;
         totalEmployerContributions: number;
+        details: import("@prisma/client/runtime/client").JsonValue | null;
     })[]>;
-    private preparePayslipData;
+    simulatePayslip(employeeId: string, month: number, year: number): Promise<{
+        baseSalary: number;
+        bonuses: number;
+        grossSalary: number;
+        employeeContributions: any;
+        totalEmployeeContributions: number;
+        taxableSalary: number;
+        incomeTax: number;
+        netSalary: number;
+        employerContributions: any;
+        totalEmployerContributions: number;
+        status: string;
+        details: {
+            gains: any[];
+            retenues: any[];
+        };
+        employeeId: any;
+    } | null>;
+    preparePayslipData(employee: any, month: number, year: number, employeeContributions: any[], employerContributions: any[]): Promise<{
+        employeeId: any;
+        payslipFields: {
+            baseSalary: number;
+            bonuses: number;
+            grossSalary: number;
+            employeeContributions: any;
+            totalEmployeeContributions: number;
+            taxableSalary: number;
+            incomeTax: number;
+            netSalary: number;
+            employerContributions: any;
+            totalEmployerContributions: number;
+            status: string;
+            details: {
+                gains: any[];
+                retenues: any[];
+            };
+        };
+    } | null>;
+    debugEmployeeRubriques(name: string): Promise<{
+        error: string;
+        employee?: undefined;
+        baseWage?: undefined;
+        assignments?: undefined;
+        structureRubriques?: undefined;
+    } | {
+        employee: {
+            id: string;
+            name: string;
+        };
+        baseWage: number;
+        assignments: {
+            id: string;
+            rubriqueCode: string;
+            rubriqueName: string;
+            type: import("@prisma/client").$Enums.RubriqueType;
+            amountOverride: import("@prisma/client-runtime-utils").Decimal | null;
+            valeur: import("@prisma/client-runtime-utils").Decimal | null;
+        }[];
+        structureRubriques: any[];
+        error?: undefined;
+    }>;
+    debugRubriqueFormulas(codes: string[]): Promise<{
+        id: number;
+        code: string;
+        nom: string;
+        type: import("@prisma/client").$Enums.RubriqueType;
+        montantType: import("@prisma/client").$Enums.RubriqueMontantType;
+        valeur: import("@prisma/client-runtime-utils").Decimal | null;
+        formule: string | null;
+        soumisCnas: boolean;
+        soumisIrg: boolean;
+        soumisChargeEmployeur: boolean;
+        ordreAffichage: number | null;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+    }[]>;
+    fixStructureDuplications(name: string): Promise<{
+        error: string;
+        message?: undefined;
+        structureId?: undefined;
+        removedCodes?: undefined;
+    } | {
+        message: string;
+        structureId: string;
+        removedCodes: string[];
+        error?: undefined;
+    }>;
+    cleanupDuplicates(name: string): Promise<{
+        error: string;
+        message?: undefined;
+        employee?: undefined;
+    } | {
+        message: string;
+        employee: string;
+        error?: undefined;
+    }>;
+    addDemoBonuses(): Promise<{
+        success: boolean;
+        message: string;
+    }>;
     getPayslips(month?: number, year?: number): Promise<({
         employee: {
             department: {
                 id: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                name: string;
             } | null;
             position: {
                 id: string;
@@ -1006,6 +1342,9 @@ export declare class HrService {
             workEmail: string;
             workPhone: string | null;
             workMobile: string | null;
+            departmentId: string | null;
+            managerId: string | null;
+            coachId: string | null;
             workAddress: string | null;
             workLocation: string | null;
             workingHours: string | null;
@@ -1028,6 +1367,7 @@ export declare class HrService {
             paymentMethod: import("@prisma/client").$Enums.PaymentMethod | null;
             status: import("@prisma/client").$Enums.EmployeeStatus;
             employeeType: import("@prisma/client").$Enums.EmployeeType;
+            userId: string | null;
             pin: string | null;
             badgeId: string | null;
             socialSecurityNumber: string | null;
@@ -1042,12 +1382,8 @@ export declare class HrService {
             cnasRateCacobath: string | null;
             cnasRateService: string | null;
             cnasMutual: string | null;
-            hireDate: Date;
-            departmentId: string | null;
-            managerId: string | null;
-            coachId: string | null;
             positionId: string | null;
-            userId: string | null;
+            hireDate: Date;
         };
     } & {
         id: string;
@@ -1055,18 +1391,19 @@ export declare class HrService {
         updatedAt: Date;
         status: string;
         bonuses: number;
-        baseSalary: number;
+        employeeId: string;
         month: number;
         year: number;
-        employeeId: string;
-        employeeContributions: import("@prisma/client/runtime/client").JsonValue | null;
-        employerContributions: import("@prisma/client/runtime/client").JsonValue | null;
+        baseSalary: number;
         grossSalary: number;
+        employeeContributions: import("@prisma/client/runtime/client").JsonValue | null;
         totalEmployeeContributions: number;
         taxableSalary: number;
         incomeTax: number;
         netSalary: number;
+        employerContributions: import("@prisma/client/runtime/client").JsonValue | null;
         totalEmployerContributions: number;
+        details: import("@prisma/client/runtime/client").JsonValue | null;
     })[]>;
     deletePayslip(id: string): Promise<{
         id: string;
@@ -1074,62 +1411,203 @@ export declare class HrService {
         updatedAt: Date;
         status: string;
         bonuses: number;
-        baseSalary: number;
+        employeeId: string;
         month: number;
         year: number;
-        employeeId: string;
-        employeeContributions: import("@prisma/client/runtime/client").JsonValue | null;
-        employerContributions: import("@prisma/client/runtime/client").JsonValue | null;
+        baseSalary: number;
         grossSalary: number;
+        employeeContributions: import("@prisma/client/runtime/client").JsonValue | null;
         totalEmployeeContributions: number;
         taxableSalary: number;
         incomeTax: number;
         netSalary: number;
+        employerContributions: import("@prisma/client/runtime/client").JsonValue | null;
         totalEmployerContributions: number;
+        details: import("@prisma/client/runtime/client").JsonValue | null;
     }>;
     getAllContributions(): Promise<{
         id: string;
-        name: string;
         code: string;
         type: string;
-        rate: number;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
         description: string | null;
+        rate: number;
+    }[]>;
+    createContribution(data: any): Promise<{
+        id: string;
+        code: string;
+        type: string;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        description: string | null;
+        rate: number;
+    }>;
+    updateContribution(id: string, data: any): Promise<{
+        id: string;
+        code: string;
+        type: string;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        description: string | null;
+        rate: number;
+    }>;
+    deleteContribution(id: string): Promise<{
+        id: string;
+        code: string;
+        type: string;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        name: string;
+        description: string | null;
+        rate: number;
+    }>;
+    generatePayslipPDF(payslipId: string): Promise<Buffer>;
+    updateTaxBrackets(): Promise<{
+        message: string;
+    }>;
+    removeCnacFromStructure(name: string): Promise<{
+        error: string;
+        message?: undefined;
+        structureId?: undefined;
+    } | {
+        message: string;
+        structureId: string;
+        error?: undefined;
+    }>;
+    fixBaseType(): Promise<{
+        message: string;
+    }>;
+    addCnacToStructure(name: string): Promise<{
+        error: string;
+        message?: undefined;
+        structureId?: undefined;
+    } | {
+        message: string;
+        structureId: string;
+        error?: undefined;
+    } | {
+        message: string;
+        error?: undefined;
+        structureId?: undefined;
+    }>;
+    getEmployeeRubriques(employeeId: string): Promise<({
+        rubrique: {
+            id: number;
+            code: string;
+            nom: string;
+            type: import("@prisma/client").$Enums.RubriqueType;
+            montantType: import("@prisma/client").$Enums.RubriqueMontantType;
+            valeur: import("@prisma/client-runtime-utils").Decimal | null;
+            formule: string | null;
+            soumisCnas: boolean;
+            soumisIrg: boolean;
+            soumisChargeEmployeur: boolean;
+            ordreAffichage: number | null;
+            isActive: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        startDate: Date;
+        endDate: Date | null;
+        employeeId: string;
+        rubriqueId: number;
+        montantOverride: import("@prisma/client-runtime-utils").Decimal | null;
+        tauxOverride: import("@prisma/client-runtime-utils").Decimal | null;
+    })[]>;
+    getAllRubriques(): Promise<{
+        id: number;
+        code: string;
+        nom: string;
+        type: import("@prisma/client").$Enums.RubriqueType;
+        montantType: import("@prisma/client").$Enums.RubriqueMontantType;
+        valeur: import("@prisma/client-runtime-utils").Decimal | null;
+        formule: string | null;
+        soumisCnas: boolean;
+        soumisIrg: boolean;
+        soumisChargeEmployeur: boolean;
+        ordreAffichage: number | null;
         isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
     }[]>;
-    createContribution(data: any): Promise<{
+    assignRubriqueToEmployee(employeeId: string, data: {
+        rubriqueId: number;
+        montantOverride?: number;
+        tauxOverride?: number;
+        startDate: string;
+        endDate?: string;
+    }): Promise<{
+        rubrique: {
+            id: number;
+            code: string;
+            nom: string;
+            type: import("@prisma/client").$Enums.RubriqueType;
+            montantType: import("@prisma/client").$Enums.RubriqueMontantType;
+            valeur: import("@prisma/client-runtime-utils").Decimal | null;
+            formule: string | null;
+            soumisCnas: boolean;
+            soumisIrg: boolean;
+            soumisChargeEmployeur: boolean;
+            ordreAffichage: number | null;
+            isActive: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+    } & {
         id: string;
-        name: string;
-        code: string;
-        type: string;
-        rate: number;
-        description: string | null;
-        isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        startDate: Date;
+        endDate: Date | null;
+        employeeId: string;
+        rubriqueId: number;
+        montantOverride: import("@prisma/client-runtime-utils").Decimal | null;
+        tauxOverride: import("@prisma/client-runtime-utils").Decimal | null;
     }>;
-    updateContribution(id: string, data: any): Promise<{
+    updateEmployeeRubrique(employeeId: string, rubriqueId: number, data: {
+        montantOverride?: number;
+        tauxOverride?: number;
+        startDate?: string;
+        endDate?: string;
+    }): Promise<{
+        rubrique: {
+            id: number;
+            code: string;
+            nom: string;
+            type: import("@prisma/client").$Enums.RubriqueType;
+            montantType: import("@prisma/client").$Enums.RubriqueMontantType;
+            valeur: import("@prisma/client-runtime-utils").Decimal | null;
+            formule: string | null;
+            soumisCnas: boolean;
+            soumisIrg: boolean;
+            soumisChargeEmployeur: boolean;
+            ordreAffichage: number | null;
+            isActive: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+    } & {
         id: string;
-        name: string;
-        code: string;
-        type: string;
-        rate: number;
-        description: string | null;
-        isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
+        startDate: Date;
+        endDate: Date | null;
+        employeeId: string;
+        rubriqueId: number;
+        montantOverride: import("@prisma/client-runtime-utils").Decimal | null;
+        tauxOverride: import("@prisma/client-runtime-utils").Decimal | null;
     }>;
-    deleteContribution(id: string): Promise<{
-        id: string;
-        name: string;
-        code: string;
-        type: string;
-        rate: number;
-        description: string | null;
-        isActive: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-    }>;
-    generatePayslipPDF(payslipId: string): Promise<Buffer>;
+    deleteEmployeeRubrique(employeeId: string, rubriqueId: number): Promise<import("@prisma/client").Prisma.BatchPayload>;
 }

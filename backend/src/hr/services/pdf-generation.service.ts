@@ -22,6 +22,7 @@ interface PayslipData {
     netSalary: number;
     employerContributions: Record<string, any>;
     totalEmployerContributions: number;
+    details?: any;
 }
 
 @Injectable()
@@ -67,7 +68,7 @@ export class PdfGenerationService {
         doc.fontSize(20).text('BULLETIN DE PAIE', { align: 'center' });
         doc.moveDown();
         doc.fontSize(12).text(
-            `Période: ${this.MONTH_NAMES[payslip.month - 1]} ${payslip.year}`,
+            `Période: ${this.MONTH_NAMES[payslip.month]} ${payslip.year}`,
             { align: 'center' }
         );
         doc.moveDown(2);
@@ -97,7 +98,13 @@ export class PdfGenerationService {
         this.addLine(doc, 'Salaire de base:', payslip.baseSalary);
 
         // Bonuses
-        if (payslip.bonuses > 0) {
+        // Bonuses / Gains
+        if (payslip.details && payslip.details.gains && Array.isArray(payslip.details.gains)) {
+            payslip.details.gains.forEach((gain: any) => {
+                this.addLine(doc, `${gain.name}:`, gain.amount);
+            });
+        } else if (payslip.bonuses > 0) {
+            // Fallback for old records
             this.addLine(doc, 'Primes et indemnités:', payslip.bonuses);
         }
 

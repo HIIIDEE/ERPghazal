@@ -9,7 +9,9 @@
       "Bash(cat:*)",
       "Bash(git diff:*)",
       "Bash(git checkout:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(node test-payslip-api.js:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

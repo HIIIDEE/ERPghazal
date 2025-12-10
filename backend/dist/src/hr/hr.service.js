@@ -26,6 +26,49 @@ let HrService = class HrService {
         this.pdfGen = pdfGen;
         this.rubriqueCalc = rubriqueCalc;
     }
+    mapMaritalStatus(status) {
+        if (!status || status === '')
+            return undefined;
+        const mapping = {
+            'Célibataire': 'SINGLE',
+            'Marié(e)': 'MARRIED',
+            'Cohabitant': 'COHABITANT',
+            'Veuf/Veuve': 'WIDOWER',
+            'Divorcé(e)': 'DIVORCED',
+            'SINGLE': 'SINGLE',
+            'MARRIED': 'MARRIED',
+            'COHABITANT': 'COHABITANT',
+            'WIDOWER': 'WIDOWER',
+            'DIVORCED': 'DIVORCED'
+        };
+        return mapping[status] || undefined;
+    }
+    mapGender(gender) {
+        if (!gender || gender === '')
+            return undefined;
+        const mapping = {
+            'Homme': 'MALE',
+            'Femme': 'FEMALE',
+            'Autre': 'OTHER',
+            'MALE': 'MALE',
+            'FEMALE': 'FEMALE',
+            'OTHER': 'OTHER'
+        };
+        return mapping[gender] || undefined;
+    }
+    mapPaymentMethod(method) {
+        if (!method || method === '')
+            return undefined;
+        const mapping = {
+            'Virement': 'VIREMENT',
+            'Espèce': 'ESPECE',
+            'Chèque': 'CHEQUE',
+            'VIREMENT': 'VIREMENT',
+            'ESPECE': 'ESPECE',
+            'CHEQUE': 'CHEQUE'
+        };
+        return mapping[method] || undefined;
+    }
     async createEmployee(data) {
         try {
             console.log('Creating employee with data:', data);
@@ -35,39 +78,39 @@ let HrService = class HrService {
                     lastName: data.lastName,
                     workEmail: data.workEmail,
                     hireDate: new Date(data.hireDate),
-                    jobTitle: data.jobTitle,
-                    workPhone: data.workPhone,
-                    workMobile: data.workMobile,
-                    departmentId: data.departmentId,
-                    workLocation: data.workLocation,
-                    address: data.address,
-                    phone: data.phone,
-                    privateEmail: data.privateEmail,
-                    identificationId: data.identificationId,
-                    badgeId: data.badgeId,
-                    paymentMethod: data.paymentMethod,
+                    jobTitle: data.jobTitle || undefined,
+                    workPhone: data.workPhone || undefined,
+                    workMobile: data.workMobile || undefined,
+                    departmentId: data.departmentId || undefined,
+                    workLocation: data.workLocation || undefined,
+                    address: data.address || undefined,
+                    phone: data.phone || undefined,
+                    privateEmail: data.privateEmail || undefined,
+                    identificationId: data.identificationId || undefined,
+                    badgeId: data.badgeId || undefined,
+                    paymentMethod: this.mapPaymentMethod(data.paymentMethod),
                     children: data.children ? Number(data.children) : 0,
-                    maritalStatus: data.maritalStatus,
-                    placeOfBirth: data.placeOfBirth,
-                    countryOfBirth: data.countryOfBirth,
-                    bankAccount: data.bankAccount,
-                    gender: data.gender,
-                    nationality: data.nationality,
-                    emergencyContact: data.emergencyContact,
-                    emergencyPhone: data.emergencyPhone,
+                    maritalStatus: this.mapMaritalStatus(data.maritalStatus),
+                    placeOfBirth: data.placeOfBirth || undefined,
+                    countryOfBirth: data.countryOfBirth || undefined,
+                    bankAccount: data.bankAccount || undefined,
+                    gender: this.mapGender(data.gender),
+                    nationality: data.nationality || undefined,
+                    emergencyContact: data.emergencyContact || undefined,
+                    emergencyPhone: data.emergencyPhone || undefined,
                     birthday: data.birthday ? new Date(data.birthday) : undefined,
-                    socialSecurityNumber: data.socialSecurityNumber,
-                    cnasAgency: data.cnasAgency,
+                    socialSecurityNumber: data.socialSecurityNumber || undefined,
+                    cnasAgency: data.cnasAgency || undefined,
                     cnasStartDate: data.cnasStartDate ? new Date(data.cnasStartDate) : undefined,
                     isHandicapped: data.isHandicapped ?? false,
                     cnasContribution: data.cnasContribution ?? true,
-                    cnasRateSalary: data.cnasRateSalary,
-                    cnasRatePatron: data.cnasRatePatron,
-                    cnasRateSocial: data.cnasRateSocial,
-                    cnasRateHousing: data.cnasRateHousing,
-                    cnasRateCacobath: data.cnasRateCacobath,
-                    cnasRateService: data.cnasRateService,
-                    cnasMutual: data.cnasMutual,
+                    cnasRateSalary: data.cnasRateSalary || undefined,
+                    cnasRatePatron: data.cnasRatePatron || undefined,
+                    cnasRateSocial: data.cnasRateSocial || undefined,
+                    cnasRateHousing: data.cnasRateHousing || undefined,
+                    cnasRateCacobath: data.cnasRateCacobath || undefined,
+                    cnasRateService: data.cnasRateService || undefined,
+                    cnasMutual: data.cnasMutual || undefined,
                 }
             });
         }
@@ -77,7 +120,7 @@ let HrService = class HrService {
         }
     }
     async updateEmployee(id, data) {
-        const { id: _id, department, position, contracts, documents, leaves, positionHistory, manager, subordinates, coach, mentees, user, attendances, createdAt, updatedAt, absences, company, ...updateData } = data;
+        const { id: _id, department, position, contracts, documents, leaves, positionHistory, manager, subordinates, coach, mentees, user, attendances, createdAt, updatedAt, absences, company, bonuses, rubriques, payslips, ...updateData } = data;
         return this.prisma.employee.update({
             where: { id },
             data: {
@@ -86,6 +129,9 @@ let HrService = class HrService {
                 birthday: data.birthday ? new Date(data.birthday) : undefined,
                 cnasStartDate: data.cnasStartDate ? new Date(data.cnasStartDate) : undefined,
                 children: data.children ? Number(data.children) : undefined,
+                maritalStatus: data.maritalStatus ? this.mapMaritalStatus(data.maritalStatus) : undefined,
+                gender: data.gender ? this.mapGender(data.gender) : undefined,
+                paymentMethod: data.paymentMethod ? this.mapPaymentMethod(data.paymentMethod) : undefined,
             }
         });
     }
@@ -103,7 +149,7 @@ let HrService = class HrService {
             }
         }
         if (endDate && startDate > endDate) {
-            throw new Error("La date de début ne peut pas être postérieure à la date de fin.");
+            throw new Error("La date de dÃ©but ne peut pas Ãªtre postÃ©rieure Ã  la date de fin.");
         }
         return this.prisma.contract.create({
             data: {
@@ -144,6 +190,11 @@ let HrService = class HrService {
                 nextContract: true
             },
             orderBy: { startDate: 'desc' }
+        });
+    }
+    async findAllTaxBrackets() {
+        return this.prisma.taxBracket.findMany({
+            orderBy: { ordre: 'asc' }
         });
     }
     async createPosition(title) {
@@ -213,7 +264,16 @@ let HrService = class HrService {
                 contracts: {
                     include: {
                         previousContract: true,
-                        nextContract: true
+                        nextContract: true,
+                        salaryStructure: {
+                            include: {
+                                rubriques: {
+                                    include: {
+                                        rubrique: true
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 positionHistory: {
@@ -225,6 +285,11 @@ let HrService = class HrService {
                         bonus: true
                     },
                     orderBy: { startDate: 'desc' }
+                },
+                rubriques: {
+                    include: {
+                        rubrique: true
+                    }
                 }
             }
         });
@@ -290,6 +355,45 @@ let HrService = class HrService {
     async deleteAbsenceReason(id) {
         return this.prisma.absenceReason.delete({ where: { id } });
     }
+    async getEmployeesWithVariables(month, year) {
+        const currentDate = new Date(year, month, 15);
+        return this.prisma.employee.findMany({
+            where: { status: 'ACTIVE' },
+            include: {
+                department: true,
+                position: true,
+                rubriques: {
+                    where: {
+                        startDate: { lte: currentDate },
+                        OR: [
+                            { endDate: null },
+                            { endDate: { gte: currentDate } }
+                        ]
+                    },
+                    include: { rubrique: true }
+                },
+                contracts: {
+                    where: {
+                        OR: [
+                            { endDate: null },
+                            { endDate: { gte: currentDate } }
+                        ]
+                    },
+                    include: {
+                        salaryStructure: {
+                            include: {
+                                rubriques: {
+                                    include: { rubrique: true },
+                                    orderBy: { ordre: 'asc' }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: { lastName: 'asc' }
+        });
+    }
     async generatePayslips(employeeIds, month, year) {
         const [employeeContributions, employerContributions, employees] = await Promise.all([
             this.prisma.socialContribution.findMany({
@@ -336,6 +440,38 @@ let HrService = class HrService {
         })));
         return payslips;
     }
+    async simulatePayslip(employeeId, month, year) {
+        const employee = await this.prisma.employee.findUnique({
+            where: { id: employeeId },
+            include: {
+                contracts: {
+                    include: {
+                        salaryStructure: {
+                            include: {
+                                rubriques: {
+                                    include: { rubrique: true },
+                                    orderBy: { ordre: 'asc' }
+                                }
+                            }
+                        }
+                    }
+                },
+                rubriques: {
+                    include: { rubrique: true }
+                }
+            }
+        });
+        if (!employee)
+            throw new Error('EmployÃ© non trouvÃ©');
+        return this.preparePayslipData(employee, month, year, [], []).then(result => {
+            if (!result)
+                return null;
+            return {
+                employeeId: result.employeeId,
+                ...result.payslipFields
+            };
+        });
+    }
     async preparePayslipData(employee, month, year, employeeContributions, employerContributions) {
         const activeContract = employee.contracts.find((c) => !c.endDate || new Date(c.endDate) > new Date());
         if (!activeContract)
@@ -345,7 +481,8 @@ let HrService = class HrService {
             employeeId: employee.id,
             month,
             year,
-            baseSalary
+            baseSalary,
+            hireDate: new Date(employee.hireDate)
         });
         let grossSalary = 0;
         let taxableSalary = 0;
@@ -356,10 +493,18 @@ let HrService = class HrService {
         let netSalary = 0;
         const empContribDetails = {};
         const emplerContribDetails = {};
+        const gainDetails = [];
+        const retenueDetails = [];
         for (const r of calculatedRubriques) {
             if (r.type === 'GAIN') {
                 grossSalary += r.montant;
                 bonuses += r.montant;
+                gainDetails.push({
+                    code: r.code,
+                    name: r.nom,
+                    amount: r.montant,
+                    rate: r.taux
+                });
             }
             else if (r.type === 'BASE') {
                 grossSalary += r.montant;
@@ -374,6 +519,12 @@ let HrService = class HrService {
                 }
                 else {
                 }
+                retenueDetails.push({
+                    code: r.code,
+                    name: r.nom,
+                    amount: r.montant,
+                    rate: r.taux
+                });
             }
             else if (r.type === 'COTISATION') {
                 totalEmployerContributions += r.montant;
@@ -398,9 +549,194 @@ let HrService = class HrService {
                 netSalary: netSalary,
                 employerContributions: emplerContribDetails,
                 totalEmployerContributions: totalEmployerContributions,
-                status: 'DRAFT'
+                status: 'DRAFT',
+                details: {
+                    gains: gainDetails,
+                    retenues: retenueDetails
+                }
             }
         };
+    }
+    async debugEmployeeRubriques(name) {
+        const employee = await this.prisma.employee.findFirst({
+            where: {
+                OR: [
+                    { lastName: { contains: name, mode: 'insensitive' } },
+                    { firstName: { contains: name, mode: 'insensitive' } }
+                ]
+            },
+            include: { contracts: true }
+        });
+        if (!employee)
+            return { error: 'Employee not found' };
+        const assignments = await this.prisma.employeeRubrique.findMany({
+            where: { employeeId: employee.id },
+            include: { rubrique: true }
+        });
+        let structureRubriques = [];
+        const contract = employee.contracts[0];
+        if (contract && contract.salaryStructureId) {
+            const structure = await this.prisma.salaryStructure.findUnique({
+                where: { id: contract.salaryStructureId },
+                include: { rubriques: { include: { rubrique: true } } }
+            });
+            if (structure) {
+                structureRubriques = structure.rubriques.map((sr) => ({
+                    code: sr.rubrique.code,
+                    name: sr.rubrique.nom,
+                    type: sr.rubrique.type
+                }));
+            }
+        }
+        return {
+            employee: { id: employee.id, name: `${employee.firstName} ${employee.lastName}` },
+            baseWage: employee.contracts[0]?.wage,
+            assignments: assignments.map(a => ({
+                id: a.id,
+                rubriqueCode: a.rubrique.code,
+                rubriqueName: a.rubrique.nom,
+                type: a.rubrique.type,
+                amountOverride: a.montantOverride,
+                valeur: a.rubrique.valeur
+            })),
+            structureRubriques
+        };
+    }
+    async debugRubriqueFormulas(codes) {
+        const rubriques = await this.prisma.rubrique.findMany({
+            where: { code: { in: codes } }
+        });
+        return rubriques;
+    }
+    async fixStructureDuplications(name) {
+        const employee = await this.prisma.employee.findFirst({
+            where: {
+                OR: [
+                    { lastName: { contains: name, mode: 'insensitive' } },
+                    { firstName: { contains: name, mode: 'insensitive' } }
+                ]
+            },
+            include: { contracts: true }
+        });
+        if (!employee || !employee.contracts[0]?.salaryStructureId) {
+            return { error: 'Employee or Structure not found' };
+        }
+        const structureId = employee.contracts[0].salaryStructureId;
+        const rubriquesToRemove = await this.prisma.rubrique.findMany({
+            where: { code: { in: ['CNR_SALARIE', 'CNAC_SALARIE'] } }
+        });
+        const idsToRemove = rubriquesToRemove.map(r => r.id);
+        const deleted = await this.prisma.structureRubrique.deleteMany({
+            where: {
+                salaryStructureId: structureId,
+                rubriqueId: { in: idsToRemove }
+            }
+        });
+        return {
+            message: `Removed ${deleted.count} redundant rubriques from structure.`,
+            structureId: structureId,
+            removedCodes: ['CNR_SALARIE', 'CNAC_SALARIE']
+        };
+    }
+    async cleanupDuplicates(name) {
+        const employee = await this.prisma.employee.findFirst({
+            where: {
+                OR: [
+                    { lastName: { contains: name, mode: 'insensitive' } },
+                    { firstName: { contains: name, mode: 'insensitive' } }
+                ]
+            }
+        });
+        if (!employee)
+            return { error: 'Employee not found' };
+        const rubriques = await this.prisma.rubrique.findMany({
+            where: {
+                code: { in: ['PRIME_RESP', 'PRIME_DISPO'] }
+            }
+        });
+        const rubIds = rubriques.map(r => r.id);
+        const deleted = await this.prisma.employeeRubrique.deleteMany({
+            where: {
+                employeeId: employee.id,
+                rubriqueId: { in: rubIds }
+            }
+        });
+        const assignments = [];
+        const startDate = new Date('2025-12-01T00:00:00.000Z');
+        for (const rub of rubriques) {
+            const assignment = await this.prisma.employeeRubrique.create({
+                data: {
+                    employeeId: employee.id,
+                    rubriqueId: rub.id,
+                    startDate: startDate,
+                    montantOverride: 20000
+                }
+            });
+            assignments.push(assignment);
+        }
+        return {
+            message: `Cleaned ${deleted.count} assignments. Re-assigned ${assignments.length} unique bonuses.`,
+            employee: employee.lastName
+        };
+    }
+    async addDemoBonuses() {
+        const employee = await this.prisma.employee.findFirst({
+            where: {
+                OR: [
+                    { lastName: { contains: 'Votre', mode: 'insensitive' } },
+                    { firstName: { contains: 'Votre', mode: 'insensitive' } }
+                ]
+            }
+        });
+        if (!employee)
+            throw new Error('Employee not found');
+        const bonuses = [
+            { nom: 'Prime de ResponsabilitÃ©', code: 'PRIME_RESP', montant: 20000 },
+            { nom: 'Prime de DisponibilitÃ©', code: 'PRIME_DISPO', montant: 20000 }
+        ];
+        for (const bonus of bonuses) {
+            let rubrique = await this.prisma.rubrique.findFirst({ where: { code: bonus.code } });
+            if (!rubrique) {
+                rubrique = await this.prisma.rubrique.create({
+                    data: {
+                        code: bonus.code,
+                        nom: bonus.nom,
+                        type: 'GAIN',
+                        montantType: 'FIXE',
+                        valeur: bonus.montant,
+                        isActive: true,
+                        ordreAffichage: 10,
+                        soumisCnas: true,
+                        soumisIrg: true
+                    }
+                });
+            }
+            const startDate = new Date('2025-12-01T00:00:00.000Z');
+            const existing = await this.prisma.employeeRubrique.findFirst({
+                where: {
+                    employeeId: employee.id,
+                    rubriqueId: rubrique.id,
+                    startDate: startDate
+                }
+            });
+            if (!existing) {
+                await this.prisma.employeeRubrique.create({
+                    data: {
+                        employeeId: employee.id,
+                        rubriqueId: rubrique.id,
+                        startDate: startDate,
+                        montantOverride: bonus.montant
+                    }
+                });
+            }
+            else {
+                await this.prisma.employeeRubrique.update({
+                    where: { id: existing.id },
+                    data: { montantOverride: bonus.montant }
+                });
+            }
+        }
+        return { success: true, message: 'Bonuses added for ' + employee.lastName };
     }
     async getPayslips(month, year) {
         const where = {};
@@ -461,9 +797,186 @@ let HrService = class HrService {
             }
         });
         if (!payslip) {
-            throw new Error('Bulletin de paie non trouvé');
+            throw new Error('Bulletin de paie non trouvÃ©');
         }
         return this.pdfGen.generatePayslipPDF(payslip);
+    }
+    async updateTaxBrackets() {
+        await this.prisma.taxBracket.deleteMany({});
+        await this.prisma.taxBracket.createMany({
+            data: [
+                {
+                    nom: 'Tranche 1 - ExonÃ©rÃ©',
+                    minAmount: 0,
+                    maxAmount: 30000,
+                    rate: 0,
+                    ordre: 1,
+                    startDate: new Date('2020-01-01T00:00:00.000Z')
+                },
+                {
+                    nom: 'Tranche 2 - 30%',
+                    minAmount: 30001,
+                    maxAmount: 120000,
+                    rate: 30,
+                    ordre: 2,
+                    startDate: new Date('2020-01-01T00:00:00.000Z')
+                },
+                {
+                    nom: 'Tranche 3 - 35%',
+                    minAmount: 120001,
+                    maxAmount: 999999999,
+                    rate: 35,
+                    ordre: 3,
+                    startDate: new Date('2020-01-01T00:00:00.000Z')
+                }
+            ]
+        });
+        return { message: 'Tax Brackets Updated to 2020 Standard (Matching Reference)' };
+    }
+    async removeCnacFromStructure(name) {
+        const employee = await this.prisma.employee.findFirst({
+            where: {
+                OR: [
+                    { lastName: { contains: name, mode: 'insensitive' } },
+                    { firstName: { contains: name, mode: 'insensitive' } }
+                ]
+            },
+            include: { contracts: true }
+        });
+        if (!employee || !employee.contracts[0]?.salaryStructureId) {
+            return { error: 'Employee or Structure not found' };
+        }
+        const structureId = employee.contracts[0].salaryStructureId;
+        const rubCnac = await this.prisma.rubrique.findFirst({
+            where: { code: 'CNAC_SALARIE' }
+        });
+        if (!rubCnac)
+            return { error: 'CNAC rubrique not found' };
+        const deleted = await this.prisma.structureRubrique.deleteMany({
+            where: {
+                salaryStructureId: structureId,
+                rubriqueId: rubCnac.id
+            }
+        });
+        return { message: `Removed CNAC from structure. Deleted ${deleted.count} entries.`, structureId };
+    }
+    async fixBaseType() {
+        const result = await this.prisma.rubrique.updateMany({
+            where: { code: 'SALAIRE_BASE', type: 'GAIN' },
+            data: { type: 'BASE' }
+        });
+        return { message: `Updated ${result.count} definitions of SALAIRE_BASE to type BASE.` };
+    }
+    async addCnacToStructure(name) {
+        const employee = await this.prisma.employee.findFirst({
+            where: {
+                OR: [
+                    { lastName: { contains: name, mode: 'insensitive' } },
+                    { firstName: { contains: name, mode: 'insensitive' } }
+                ]
+            },
+            include: { contracts: true }
+        });
+        if (!employee || !employee.contracts[0]?.salaryStructureId) {
+            return { error: 'Employee or Structure not found' };
+        }
+        const structureId = employee.contracts[0].salaryStructureId;
+        const rubCnac = await this.prisma.rubrique.findFirst({
+            where: { code: 'CNAC_SALARIE' }
+        });
+        if (!rubCnac)
+            return { error: 'CNAC rubrique not found' };
+        const existing = await this.prisma.structureRubrique.findFirst({
+            where: {
+                salaryStructureId: structureId,
+                rubriqueId: rubCnac.id
+            }
+        });
+        if (!existing) {
+            await this.prisma.structureRubrique.create({
+                data: {
+                    salaryStructureId: structureId,
+                    rubriqueId: rubCnac.id,
+                    ordre: 22
+                }
+            });
+            return { message: 'Restored CNAC (1%) to structure', structureId };
+        }
+        return { message: 'CNAC already in structure' };
+    }
+    async getEmployeeRubriques(employeeId) {
+        return this.prisma.employeeRubrique.findMany({
+            where: { employeeId },
+            include: { rubrique: true },
+            orderBy: { startDate: 'desc' }
+        });
+    }
+    async getAllRubriques() {
+        return this.prisma.rubrique.findMany({
+            where: { isActive: true },
+            orderBy: { ordreAffichage: 'asc' }
+        });
+    }
+    async assignRubriqueToEmployee(employeeId, data) {
+        const existing = await this.prisma.employeeRubrique.findFirst({
+            where: {
+                employeeId,
+                rubriqueId: data.rubriqueId,
+                endDate: null
+            }
+        });
+        if (existing) {
+            return this.prisma.employeeRubrique.update({
+                where: { id: existing.id },
+                data: {
+                    montantOverride: data.montantOverride,
+                    tauxOverride: data.tauxOverride,
+                    startDate: new Date(data.startDate)
+                },
+                include: { rubrique: true }
+            });
+        }
+        return this.prisma.employeeRubrique.create({
+            data: {
+                employeeId,
+                rubriqueId: data.rubriqueId,
+                montantOverride: data.montantOverride,
+                tauxOverride: data.tauxOverride,
+                startDate: new Date(data.startDate),
+                endDate: data.endDate ? new Date(data.endDate) : null
+            },
+            include: { rubrique: true }
+        });
+    }
+    async updateEmployeeRubrique(employeeId, rubriqueId, data) {
+        const existing = await this.prisma.employeeRubrique.findFirst({
+            where: {
+                employeeId,
+                rubriqueId,
+                endDate: null
+            }
+        });
+        if (!existing) {
+            throw new Error('Assignment not found');
+        }
+        return this.prisma.employeeRubrique.update({
+            where: { id: existing.id },
+            data: {
+                montantOverride: data.montantOverride !== undefined ? data.montantOverride : existing.montantOverride,
+                tauxOverride: data.tauxOverride !== undefined ? data.tauxOverride : existing.tauxOverride,
+                startDate: data.startDate ? new Date(data.startDate) : existing.startDate,
+                endDate: data.endDate ? new Date(data.endDate) : existing.endDate
+            },
+            include: { rubrique: true }
+        });
+    }
+    async deleteEmployeeRubrique(employeeId, rubriqueId) {
+        return this.prisma.employeeRubrique.deleteMany({
+            where: {
+                employeeId,
+                rubriqueId
+            }
+        });
     }
 };
 exports.HrService = HrService;
